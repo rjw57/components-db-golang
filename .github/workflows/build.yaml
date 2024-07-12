@@ -1,0 +1,17 @@
+name: Build
+
+on:
+  - push
+
+jobs:
+  backend:
+    name: Build backend docker image
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          push: false
+          target: backend
+          tags: backend:${{ github.sha }}

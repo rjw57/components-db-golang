@@ -1,0 +1,61 @@
+services:
+  backend:
+    build:
+      dockerfile_inline: |
+        FROM golang:1.20
+        RUN go install github.com/cosmtrek/air@v1.44.0
+        RUN mkdir -p /usr/src/backend
+        WORKDIR /usr/src/backend
+        COPY backend/go.mod backend/go.sum ./
+        RUN go mod download
+    command: [
+      "air",
+      "-tmp_dir", "../../air-tmp",
+      "-build.cmd", "go build -o /air-tmp/main",
+      "-build.bin", "/air-tmp/main"]
+    working_dir: /usr/src/backend
+    ports:
+      - 8000:8000
+    volumes:
+      - ./:/usr/src/:ro
+      - golang-cache:/gocache
+      - air-tmp:/usr/air-tmp
+    environment:
+      GOCACHE: /gocache
+      GOFLAGS: -buildvcs=false
+    depends_on:
+      db:
+        condition: service_healthy
+
+  prod-backend:
+    build:
+      target: backend
+    ports:
+      - 8000:8000
+    profiles:
+      - production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: components-user
+      POSTGRES_DB: components
+      POSTGRES_PASSWORD: components-pass
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - --dbname=postgresql://components-user:components-pass@localhost:5432/components
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+  golang-cache:
+  air-tmp:

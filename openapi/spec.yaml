@@ -20,10 +20,15 @@ paths:
       responses:
         '200':
           description: Successful operation
+          parameters:
+            - name: cursor
+              in: query
+              description: Cursor used for paginated responses
+              required: false
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CabinetSummary"
+                $ref: "#/components/schemas/CabinetList"
         '401':
           description: Unauthorized
         '403':
@@ -35,3 +40,15 @@ components:
       properties:
         id:
           type: string
+          nullable: false
+    CabinetList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CabinetSummary"
+        nextCursor:
+          type: string
+          nullable: true
+          optional: true

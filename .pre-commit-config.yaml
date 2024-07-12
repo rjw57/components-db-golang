@@ -31,6 +31,12 @@ repos:
         files: "\\.go$"
         language: system
         entry: sh -c "cd backend/ && go vet ."
+      - id: go-generate
+        name: go generate
+        exclude: "^(?!backend/)"
+        files: "\\.go$"
+        language: system
+        entry: sh -c "cd backend/ && go generate ./..."
       - id: go-mod-tidy
         name: go mod tidy
         exclude: "^(?!backend/)"
