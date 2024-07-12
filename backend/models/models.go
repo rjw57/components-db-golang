@@ -9,10 +9,10 @@ import (
 
 type Cabinet struct {
 	ID        uint      `fake:"skip"`
-	UUID      uuid.UUID `fake:"skip" gorm:"index;type:uuid;default:gen_random_uuid()"`
-	Name      string    `fake:"{adjective} {noun}"`
-	CreatedAt time.Time `fake:"skip"`
-	UpdatedAt time.Time `fake:"skip"`
+	UUID      uuid.UUID `fake:"skip" gorm:"index;type:uuid;default:gen_random_uuid();not null"`
+	Name      string    `fake:"{adjective} {noun}" gorm:"not null"`
+	CreatedAt time.Time `fake:"skip" gorm:"not null"`
+	UpdatedAt time.Time `fake:"skip" gotm:"not null"`
 }
 
 // FakeCabinet returns a cabinet with fake data which can be inserted into the database.
