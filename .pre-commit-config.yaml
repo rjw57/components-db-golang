@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -13,3 +13,27 @@ repos:
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        exclude: "^(?!backend/)"
+        language: system
+        entry: sh -c "cd backend/ && go fmt ."
+        pass_filenames: false
+      - id: go-vet
+        name: go vet
+        exclude: "^(?!backend/)"
+        files: "\\.go$"
+        language: system
+        entry: sh -c "cd backend/ && go vet ."
+      - id: go-mod-tidy
+        name: go mod tidy
+        exclude: "^(?!backend/)"
+        files: "\\.go$"
+        language: system
+        entry: sh -c "cd backend/ && go mod tidy"
