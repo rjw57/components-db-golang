@@ -4,13 +4,23 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
+
+// CabinetDetail defines model for CabinetDetail.
+type CabinetDetail struct {
+	Drawers *[]DrawerDetail `json:"drawers,omitempty"`
+	Id      *string         `json:"id,omitempty"`
+}
 
 // CabinetList defines model for CabinetList.
 type CabinetList struct {
 	Items      *[]CabinetSummary `json:"items,omitempty"`
-	NextCursor *string           `json:"nextCursor"`
+	NextCursor *string           `json:"nextCursor,omitempty"`
 }
 
 // CabinetSummary defines model for CabinetSummary.
@@ -18,11 +28,29 @@ type CabinetSummary struct {
 	Id *string `json:"id,omitempty"`
 }
 
+// DrawerDetail defines model for DrawerDetail.
+type DrawerDetail = DrawerSummary
+
+// DrawerSummary defines model for DrawerSummary.
+type DrawerSummary struct {
+	Id    *string `json:"id,omitempty"`
+	Label *string `json:"label,omitempty"`
+}
+
+// CabinetsListParams defines parameters for CabinetsList.
+type CabinetsListParams struct {
+	// Cursor Cursor used for paginated responses
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// List cabinets
 	// (GET /cabinets)
-	CabinetsList(c *gin.Context)
+	CabinetsList(c *gin.Context, params CabinetsListParams)
+	// Get cabinet and contents
+	// (GET /cabinets/{cabinetId})
+	CabinetGet(c *gin.Context, cabinetId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -37,6 +65,19 @@ type MiddlewareFunc func(c *gin.Context)
 // CabinetsList operation middleware
 func (siw *ServerInterfaceWrapper) CabinetsList(c *gin.Context) {
 
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CabinetsListParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "cursor", c.Request.URL.Query(), &params.Cursor)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter cursor: %w", err), http.StatusBadRequest)
+		return
+	}
+
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
 		if c.IsAborted() {
@@ -44,7 +85,31 @@ func (siw *ServerInterfaceWrapper) CabinetsList(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.CabinetsList(c)
+	siw.Handler.CabinetsList(c, params)
+}
+
+// CabinetGet operation middleware
+func (siw *ServerInterfaceWrapper) CabinetGet(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "cabinetId" -------------
+	var cabinetId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "cabinetId", c.Param("cabinetId"), &cabinetId, runtime.BindStyledParameterOptions{Explode: false, Required: false})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter cabinetId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CabinetGet(c, cabinetId)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -75,4 +140,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/cabinets", wrapper.CabinetsList)
+	router.GET(options.BaseURL+"/cabinets/:cabinetId", wrapper.CabinetGet)
 }
