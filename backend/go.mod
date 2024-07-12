@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	ariga.io/atlas-provider-gorm v0.5.0
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.5.0

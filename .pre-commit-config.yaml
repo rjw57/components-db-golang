@@ -19,6 +19,12 @@ repos:
       - id: actionlint
   - repo: local
     hooks:
+      - id: go-generate
+        name: go generate
+        language: docker_image
+        entry: golang:1.22
+        args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go generate ./..."]
+        pass_filenames: false
       - id: go-fmt
         name: go fmt
         exclude: "^(?!backend/)"
@@ -34,12 +40,6 @@ repos:
         language: docker_image
         entry: golang:1.22
         args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go vet ./..."]
-        pass_filenames: false
-      - id: go-generate
-        name: go generate
-        language: docker_image
-        entry: golang:1.22
-        args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go generate ./..."]
         pass_filenames: false
       - id: go-mod-tidy
         name: go mod tidy

@@ -16,23 +16,26 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // CabinetDetail defines model for CabinetDetail.
 type CabinetDetail struct {
 	Drawers *[]DrawerDetail `json:"drawers,omitempty"`
-	Id      *string         `json:"id,omitempty"`
+	Id      *UUID           `json:"id,omitempty"`
+	Name    *string         `json:"name,omitempty"`
 }
 
 // CabinetList defines model for CabinetList.
 type CabinetList struct {
 	Items      *[]CabinetSummary `json:"items,omitempty"`
-	NextCursor *string           `json:"nextCursor,omitempty"`
+	NextCursor *UUID             `json:"nextCursor,omitempty"`
 }
 
 // CabinetSummary defines model for CabinetSummary.
 type CabinetSummary struct {
-	Id *string `json:"id,omitempty"`
+	Id   *UUID   `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 // DrawerDetail defines model for DrawerDetail.
@@ -40,7 +43,7 @@ type DrawerDetail = DrawerSummary
 
 // DrawerSummary defines model for DrawerSummary.
 type DrawerSummary struct {
-	Id    *string `json:"id,omitempty"`
+	Id    *UUID   `json:"id,omitempty"`
 	Label *string `json:"label,omitempty"`
 }
 
@@ -50,12 +53,15 @@ type ServerStatus struct {
 }
 
 // UUID defines model for UUID.
-type UUID = string
+type UUID = openapi_types.UUID
 
 // CabinetsListParams defines parameters for CabinetsList.
 type CabinetsListParams struct {
 	// Cursor Cursor used for paginated responses
 	Cursor *UUID `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum number of items to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -93,6 +99,14 @@ func (siw *ServerInterfaceWrapper) CabinetsList(c *gin.Context) {
 	err = runtime.BindQueryParameter("form", true, false, "cursor", c.Request.URL.Query(), &params.Cursor)
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter cursor: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -178,18 +192,20 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"gAulegoAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const PageSize = 100
+const DefaultPageSize = 100
 
 type Server struct {
 	DB *gorm.DB

@@ -25,7 +25,14 @@ paths:
           description: Cursor used for paginated responses
           schema:
             $ref: "#/components/schemas/UUID"
-          required: false
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
       responses:
         "200":
           description: Successful operation
@@ -77,6 +84,7 @@ components:
   schemas:
     UUID:
       type: string
+      format: uuid
       pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       minLength: 36
       maxLength: 36
@@ -84,6 +92,8 @@ components:
       type: object
       properties:
         id:
+          $ref: "#/components/schemas/UUID"
+        name:
           type: string
     ServerStatus:
       type: object
@@ -109,12 +119,12 @@ components:
           items:
             $ref: "#/components/schemas/CabinetSummary"
         nextCursor:
-          type: string
+          $ref: "#/components/schemas/UUID"
     DrawerSummary:
       type: object
       properties:
         id:
-          type: string
+          $ref: "#/components/schemas/UUID"
         label:
           type: string
     DrawerDetail:
