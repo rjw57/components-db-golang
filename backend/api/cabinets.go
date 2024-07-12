@@ -4,26 +4,52 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
+
+	"github.com/rjw57/components-db-golang/backend/models"
 )
 
-type Server struct{}
+func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
+	var cabinets []models.Cabinet
 
-func NewServer() Server {
-	return Server{}
-}
+	tx := s.DB.Limit(PageSize + 1).Order("id ASC")
+	if params.Cursor != nil {
+		c, err := uuid.Parse(*params.Cursor)
+		if err != nil {
+			ctx.AbortWithStatus(400)
+			return
+		}
+		tx = tx.Where("id >= (?)", s.DB.Table("cabinets").Select("id").Where("uuid = ?", c))
+	}
 
-func (Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
-	s := "cabinet-2"
-	resp := CabinetList{
-		Items: &[]CabinetSummary{
-			{Id: &s},
-		},
+	result := tx.Find(&cabinets)
+	if result.Error != nil {
+		log.Error().Err(result.Error).Msg("Error querying cabinets")
+		ctx.AbortWithError(500, result.Error)
+		return
+	}
+
+	items := make([]CabinetSummary, 0, PageSize)
+	for i, cab := range cabinets {
+		if i >= PageSize {
+			break
+		}
+		id := cab.UUID.String()
+		items = append(items, CabinetSummary{Id: &id})
+	}
+
+	resp := CabinetList{Items: &items}
+
+	if len(cabinets) > PageSize {
+		var s = cabinets[PageSize].UUID.String()
+		resp.NextCursor = &s
 	}
 
 	ctx.JSON(http.StatusOK, resp)
 }
 
-func (Server) CabinetGet(ctx *gin.Context, cabinetId string) {
+func (s Server) CabinetGet(ctx *gin.Context, cabinetId string) {
 	resp := CabinetDetail{
 		Id:      &cabinetId,
 		Drawers: &[]DrawerDetail{},

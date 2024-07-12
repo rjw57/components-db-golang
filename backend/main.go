@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	oapivalidate "github.com/oapi-codegen/gin-middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -19,9 +18,15 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
+	// Create a database session.
+	db, err := OpenDatabase()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error opening database")
+	}
+
 	// Create a gin Engine and register API routes with it.
 	r := NewGinEngine()
-	api.RegisterHandlers(r, api.NewServer())
+	api.RegisterHandlers(r, api.NewServer(db))
 
 	// Serve HTTP until the world ends.
 	log.Fatal().Err(NewHttpServer(r).ListenAndServe())
@@ -29,32 +34,15 @@ func main() {
 
 // NewGinEngine constructs a new gin.Engine instance with our desired middleware added.
 func NewGinEngine() *gin.Engine {
-	// Configure gin and add any required middleware.
 	r := gin.New()
 	r.Use(logger.DefaultStructuredLogger())
 	r.Use(gin.Recovery())
+
+	swagger, err := api.GetSwagger()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error getting API specification")
+	}
+	r.Use(oapivalidate.OapiRequestValidator(swagger))
+
 	return r
-}
-
-// NewHttpServer constructs a new http.Server instance respecting the PORT and HOST environment
-// variables if set.
-func NewHttpServer(handler http.Handler) *http.Server {
-	bind_host := "0.0.0.0"
-	bind_port := "8000"
-
-	if v, ok := os.LookupEnv("HOST"); ok {
-		bind_host = v
-	}
-
-	if v, ok := os.LookupEnv("PORT"); ok {
-		bind_port = v
-	}
-
-	bind_addr := fmt.Sprintf("%v:%v", bind_host, bind_port)
-	log.Info().Str("bind_addr", bind_addr).Msg("Starting server")
-
-	return &http.Server{
-		Handler: handler,
-		Addr:    bind_addr,
-	}
 }

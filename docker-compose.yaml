@@ -1,3 +1,6 @@
+x-backend-env: &backend-env
+  DATABASE_DSN: "user=components-user password=components-pass dbname=components host=db sslmode=disable"
+
 services:
   db:
     image: postgres:16
@@ -21,9 +24,25 @@ services:
     working_dir: /usr/src/backend
     volumes:
       - ./:/usr/src/:ro
-    command: [
-      "migrate", "apply",
-      "--url", "postgresql://components-user:components-pass@db:5432/components?sslmode=disable"]
+    command:
+      - "migrate"
+      - "apply"
+      - "--url"
+      - "postgresql://components-user:components-pass@db:5432/components?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  psql:
+    image: postgres:16
+    entrypoint:
+      - "psql"
+      - "--dbname=postgresql://components-user:components-pass@db:5432/components"
+    working_dir: /usr/src/
+    volumes:
+      - ./:/usr/src/:ro
+    profiles:
+      - tools
     depends_on:
       db:
         condition: service_healthy
@@ -34,11 +53,16 @@ services:
         FROM golang:1.22
         RUN go install github.com/air-verse/air@v1.52.3
         WORKDIR /usr/src/backend
-    command: [
-      "air",
-      "-tmp_dir", "../../air-tmp",
-      "-build.cmd", "go build -o /air-tmp/main",
-      "-build.bin", "/air-tmp/main"]
+    command:
+      [
+        "air",
+        "-tmp_dir",
+        "../../air-tmp",
+        "-build.cmd",
+        "go build -o /air-tmp/main",
+        "-build.bin",
+        "/air-tmp/main",
+      ]
     working_dir: /usr/src/backend
     ports:
       - 8000:8000
@@ -47,6 +71,7 @@ services:
       - golang-cache:/gocache
       - air-tmp:/usr/air-tmp
     environment:
+      <<: *backend-env
       GOCACHE: /gocache
       GOFLAGS: -buildvcs=false
     depends_on:
@@ -98,6 +123,8 @@ services:
       - 8000:8000
     profiles:
       - production
+    environment:
+      <<: *backend-env
     depends_on:
       db:
         condition: service_healthy

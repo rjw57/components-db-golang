@@ -4,9 +4,16 @@
 package api
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
+	"strings"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	"github.com/oapi-codegen/runtime"
 )
@@ -37,10 +44,13 @@ type DrawerSummary struct {
 	Label *string `json:"label,omitempty"`
 }
 
+// UUID defines model for UUID.
+type UUID = string
+
 // CabinetsListParams defines parameters for CabinetsList.
 type CabinetsListParams struct {
 	// Cursor Cursor used for paginated responses
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Cursor *UUID `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -50,7 +60,7 @@ type ServerInterface interface {
 	CabinetsList(c *gin.Context, params CabinetsListParams)
 	// Get cabinet and contents
 	// (GET /cabinets/{cabinetId})
-	CabinetGet(c *gin.Context, cabinetId string)
+	CabinetGet(c *gin.Context, cabinetId UUID)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -94,7 +104,7 @@ func (siw *ServerInterfaceWrapper) CabinetGet(c *gin.Context) {
 	var err error
 
 	// ------------- Path parameter "cabinetId" -------------
-	var cabinetId string
+	var cabinetId UUID
 
 	err = runtime.BindStyledParameterWithOptions("simple", "cabinetId", c.Param("cabinetId"), &cabinetId, runtime.BindStyledParameterOptions{Explode: false, Required: false})
 	if err != nil {
@@ -141,4 +151,92 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.GET(options.BaseURL+"/cabinets", wrapper.CabinetsList)
 	router.GET(options.BaseURL+"/cabinets/:cabinetId", wrapper.CabinetGet)
+}
+
+// Base64 encoded, gzipped, json marshaled Swagger object
+var swaggerSpec = []string{
+
+	"H4sIAAAAAAAC/8xVQW/bPAz9KwK/Ht3EbYoPm68JVgQosEPRU5EBjE07KmzJk+S1maH/PkiWnaROVu+0",
+	"ncLI1OMj36PdQiqrWgoSRkPSgk53VKEPl7jlgsyKDPLSHWBZfs0heW7hSlEOCfw3P1yeh5vzcO2xqSpU",
+	"e7BRC7WSNSnDyeNmCl9J+ZAbqnzwO8CVzw80bARmXxMkgErhHuzhQG5fKDVgN6OTqO/lgWvjyp0SGlhM",
+	"ojPq7x2hCAS9mWWjtFQOKzzVRnFRnOM7sOshxwSziUAno5qsWHdraGhzEfjPCEZQ4pbKidSfntYrl1rh",
+	"2wOJwuwgWfwfQcXF8d8ajSElIIFvz/H1Z7zON+0nez3EdxPim1t7BdGIk42Ai1x6utyU7tlymBVbocEt",
+	"aoIIfpDSXDoO8exmFjvysiaBNYcEFrN4tgBPdOdHM087cf2fgrz9MtKp4rXpUJwpWZ/FXrnZsRoLLtA/",
+	"9+DKx+vMcQqJ3squjsKKjN+n5/fInQlZoyljuVQ9LGVMka6l0KTBdQ0JfG9I7SECgZXrPO3sG4X3wUc7",
+	"4cWzzjkH4KSF2zh2P6kUhoTvHOu65KnvZv6iHcl2YonjDfZinbb62KQpaZ03JRvm5ZS5i2/GE38S2Jid",
+	"VPwnZV3SYpz0RaotzzIS3q+6t/6pXM5HWLjZQziCjUsfVJ+3IVpn9qID7smwMCTNZM6QaS6Kkvoyl0xw",
+	"Tx9aYL1ygAGHGckUmUaJXnZn0yPVe6r/oPD9+/9vSu91CqNEkQ2anXeBHU5He9kv+06WGRcFC59EL9Xh",
+	"c/xeF/8tPUVanbvISpn6LXfvEi6OzRoAu3pn8JbnqvdnYDf2VwAAAP///jsrnjAIAAA=",
+}
+
+// GetSwagger returns the content of the embedded swagger specification file
+// or error if failed to decode
+func decodeSpec() ([]byte, error) {
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	}
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(zr)
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+var rawSpec = decodeSpecCached()
+
+// a naive cached of a decoded swagger spec
+func decodeSpecCached() func() ([]byte, error) {
+	data, err := decodeSpec()
+	return func() ([]byte, error) {
+		return data, err
+	}
+}
+
+// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
+func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
+	res := make(map[string]func() ([]byte, error))
+	if len(pathToFile) > 0 {
+		res[pathToFile] = rawSpec
+	}
+
+	return res
+}
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file. The external references of Swagger specification are resolved.
+// The logic of resolving external references is tightly connected to "import-mapping" feature.
+// Externally referenced files must be embedded in the corresponding golang packages.
+// Urls can be supported but this task was out of the scope.
+func GetSwagger() (swagger *openapi3.T, err error) {
+	resolvePath := PathToRawSpec("")
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
+		pathToFile := url.String()
+		pathToFile = path.Clean(pathToFile)
+		getSpec, ok := resolvePath[pathToFile]
+		if !ok {
+			err1 := fmt.Errorf("path not found: %s", pathToFile)
+			return nil, err1
+		}
+		return getSpec()
+	}
+	var specData []byte
+	specData, err = rawSpec()
+	if err != nil {
+		return
+	}
+	swagger, err = loader.LoadFromData(specData)
+	if err != nil {
+		return
+	}
+	return
 }

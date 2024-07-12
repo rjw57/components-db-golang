@@ -21,6 +21,12 @@ $ docker compose build --pull
 $ docker compose up --wait
 ```
 
+Open a database shell:
+
+```console
+$ docker compose run psql
+```
+
 Run production backend:
 
 ```console
@@ -49,5 +55,6 @@ $ docker compose run atlas migrate diff --env gorm
 
 Configuration environment variables:
 
+- `DATABASE_DSN` - (required) postgres connection string
 - `HOST` - bind interface. Default: `0.0.0.0`
 - `POST` - bind port. Default: `8000`

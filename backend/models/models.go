@@ -3,12 +3,12 @@ package models
 import (
 	"time"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type Cabinet struct {
-	gorm.Model
-	Id        string    `gorm:"primaryKey"`
+	ID        uint      `gorm:"primaryKey"`
+	UUID      uuid.UUID `gorm:"index;type:uuid;default:gen_random_uuid()"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
