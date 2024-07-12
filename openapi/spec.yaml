@@ -9,6 +9,8 @@ tags:
     description: Drawers of components located within cabinets
   - name: component
     description: Components
+  - name: status
+    description: API status
 paths:
   /cabinets:
     get:
@@ -59,6 +61,18 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
+  /status:
+    get:
+      tags:
+        - status
+      operationId: statusGet
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerStatus"
 components:
   schemas:
     UUID:
@@ -71,6 +85,12 @@ components:
       properties:
         id:
           type: string
+    ServerStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          const: ok
     CabinetDetail:
       type: object
       allOf:

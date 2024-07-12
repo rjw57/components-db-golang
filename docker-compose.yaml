@@ -53,6 +53,9 @@ services:
         FROM golang:1.22
         RUN go install github.com/air-verse/air@v1.52.3
         WORKDIR /usr/src/backend
+        HEALTHCHECK \
+          --interval=1s --timeout=5s --retries=10 --start-period=60s \
+          CMD curl --fail http://localhost:8000/status
     command:
       [
         "air",
