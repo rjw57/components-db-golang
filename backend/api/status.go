@@ -7,7 +7,6 @@ import (
 )
 
 func (s Server) StatusGet(ctx *gin.Context) {
-	ok := "ok"
-	resp := ServerStatus{Status: &ok}
+	resp := ServerStatus{}
 	ctx.JSON(http.StatusOK, resp)
 }

@@ -48,9 +48,7 @@ type DrawerSummary struct {
 }
 
 // ServerStatus defines model for ServerStatus.
-type ServerStatus struct {
-	Status *string `json:"status,omitempty"`
-}
+type ServerStatus = map[string]interface{}
 
 // UUID defines model for UUID.
 type UUID = openapi_types.UUID
@@ -128,7 +126,7 @@ func (siw *ServerInterfaceWrapper) CabinetGet(c *gin.Context) {
 	// ------------- Path parameter "cabinetId" -------------
 	var cabinetId UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "cabinetId", c.Param("cabinetId"), &cabinetId, runtime.BindStyledParameterOptions{Explode: false, Required: false})
+	err = runtime.BindStyledParameterWithOptions("simple", "cabinetId", c.Param("cabinetId"), &cabinetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter cabinetId: %w", err), http.StatusBadRequest)
 		return
@@ -192,20 +190,20 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8RWXY+bOhD9K9bcfWQTslld3ctblairSFu1UrRPq1RyYABvwaa22d0U8d8rG0NCIF0q",
-	"9ePNNuMzZ2bODK4gFHkhOHKtIKhAhSnm1C5XdM846jVqyjJzQLPsYwzBYwVXEmMI4J/58fLc3Zy7a9sy",
-	"z6k8QO1VUEhRoNQMLW4k6QtKu2Qac7v4EeDa2jsatQf6UCAEQKWkB6iPB2L/hKGGejc48dpY7pnSxl2f",
-	"UMdiEp1BfGeEPOD4qlelVEK+hfXwsFmPhdARbr0MOUfTsD3gNEdj61woLRlPxp32Mj254M2tLh+7i8C/",
-	"IJiM7jGbGM0W5TPKraa6VEOfqjsPBTeqAPEFvCm4lktQQSxkTs3FsmQReJDT13vkiU4hWP7rQc746bag",
-	"WqPkEMDnR//6f3od76r/6utufTthvbipr0Y41h4wHgubFqYz823VpZCsqaZ7qhA8eEapmDAc/Nli5ptg",
-	"RIGcFgwCWM782RIs0dTmZR42GrSbBG3jRKhCyQrdoJh2Iq0VeWE6JQVNGKf2uwWXdr2JDCdnaJvQ+JE0",
-	"R20nweM5ctM+pFQYkVjIFhYjIlEVgitUYKKGAL6WKA/Q6hzCpvE8N8mmduA5gQ/0leVlTniZ71ESERM7",
-	"HIgWRKIuJb/gPmM50z3vEca0zDQEC9+3IjG47Y5xt+uqyrjGBCXUppGOwQYV3Pi+k6tGbqtBiyJjoc3w",
-	"/EkZ3tXEsE/noRVQP/ptGYaoVFxmpKuhUcutvxiq4IHTUqdCsm8YNUbLodF7IfcsipDbnlLtJOhLyGib",
-	"JkYP4I5gZ8w7Jc4rt9pE9UVV3qEmLknKFI4SxXiSYevmkjDv8E1ZbtYG0OEMtWBa50SJLdWfFeMfKHz7",
-	"N/2bpbd1cqmkPOpqdlEFx5Ht6t4vYzPpmyr+tvz1fipj6bPfCVMkRZrp1L1QXDwugl19cjgYfe08TUUW",
-	"MZ4Q916yyju+1c5lBsMZth67SDIR2kFqxjXjp73nABt/I3irMe/t2Yj9u08b4iLu7N2+3tXfAwAA////",
-	"gAulegoAAA==",
+	"H4sIAAAAAAAC/8RWXYvrNhD9K2J6H72Jc3Mprd9KQi+BW1oI+7SkoNhjW4steaXR7qbG/71Ilp0PJ90U",
+	"+vEUSR6dmTNzZqIWUlU3SqIkA0kLJi2x5n654nshkdZIXFTugFfVrzkkTy180phDAt/Nj5fn4eY8XNva",
+	"uub6AF3UQqNVg5oEetxM8zfUfikIa7/4K8C1tw9hdBHQoUFIgGvND9AdD9T+GVOCbjc5iQYu34Qh5+48",
+	"oDGKu8KZ8LsIKAKJ77Sy2ij9Edbj42Z9jcIY8OBlGnN2H3YEktfobIMLQ1rI4rrTs0zfXfD+1piP3U3g",
+	"f4BMxfdY3clmi/oV9ZY4WXNy5WjgQZMWcqVrTpCAtSKDCGr+/g1lQSUky+8jqIU83TacCLWEBH5/ih9+",
+	"5A/5rv2hexjXX+5YLz53nyCakOgiEDJXPlhBlfu2GnPB1pz4nhuECF5RG6FcDPFsMYsdGdWg5I2ABJaz",
+	"eLYEH2jpic/TXkx+U6DvgAxNqkVDPYrrCzZYsTdBJWt4IST33z249utN5mIKhr6bnB/NayTf0k+XyH0f",
+	"MGswY7nSAyxmTKNplDRowLGGBF4s6gMMgoW076AojKR7W+kygF/4u6htzaSt96iZypnvckaKaSSr5Q33",
+	"lagFnXnPMOe2IkgWcexF4nCHnZBhN1ZVSMICNXSuI45kkxY+x7H7SZUklL4avGkqkfoMz5+Ni7u9k/bp",
+	"YPMCOme/tWmKxuS2YmMNnVq+xIupCh4lt1QqLf7ArDdaTo1+VnovsgylbzoztPS5hJy2eeH0AOEIds58",
+	"VOK8DatN1t1U5VckFpJkXOE4M0IWFQ5ubgnzK34oy83aAQacqRZc65wocQgVXCFfrNCYQULa4t8U538g",
+	"hOFv8v+Ugq9bSC2X2VjDm6ow44wOOjgvaz/C+6r+a/k7+7e4lj7/nQnDSuQVleHpEfgEBrvu5HAyCof5",
+	"WqoqE7Jg4SHklXh8hF3KDqYzbX3tIqtU6gerG99CnvZiAOz9XcFbXfM+nF2x/+m3DQuMR/uw73bdnwEA",
+	"AP//R7hNk1MKAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

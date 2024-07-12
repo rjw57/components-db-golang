@@ -57,6 +57,7 @@ paths:
           description: ID of cabinet to return
           schema:
             $ref: "#/components/schemas/UUID"
+          required: true
       responses:
         "200":
           description: Successful operation
@@ -97,10 +98,6 @@ components:
           type: string
     ServerStatus:
       type: object
-      properties:
-        status:
-          type: string
-          const: ok
     CabinetDetail:
       type: object
       allOf:
