@@ -1,5 +1,5 @@
 ########## Backend web server
-FROM golang:1.20 AS backend-build
+FROM golang:1.22 AS backend-build
 WORKDIR /usr/src/backend
 COPY backend/go.mod backend/go.sum ./
 RUN \

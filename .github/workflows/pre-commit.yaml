@@ -1,4 +1,4 @@
-name: Test
+name: pre-commit checks
 
 on:
   - push
@@ -8,5 +8,4 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
       - uses: ./.github/actions/pre-commit
