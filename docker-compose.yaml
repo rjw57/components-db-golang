@@ -16,6 +16,7 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+      start_period: 120s
     volumes:
       - db-data:/var/lib/postgresql/data
 
@@ -53,9 +54,6 @@ services:
         FROM golang:1.22
         RUN go install github.com/air-verse/air@v1.52.3
         WORKDIR /usr/src/backend
-        HEALTHCHECK \
-          --interval=1s --timeout=5s --retries=10 --start-period=60s \
-          CMD curl --fail http://localhost:8000/status
     command:
       [
         "air",
@@ -66,6 +64,12 @@ services:
         "-build.bin",
         "/air-tmp/main",
       ]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/status"]
+      interval: 5m
+      retries: 10
+      start_period: 120s
+      start_interval: 1s
     working_dir: /usr/src/backend
     ports:
       - 8000:8000
@@ -75,7 +79,8 @@ services:
       - air-tmp:/usr/air-tmp
     environment:
       <<: *backend-env
-      GOCACHE: /gocache
+      GOCACHE: /gocache/go-build
+      GOMODCACHE: /gocache/mod
       GOFLAGS: -buildvcs=false
     depends_on:
       db:
@@ -93,6 +98,7 @@ services:
     working_dir: /usr/src/backend
     environment:
       GOCACHE: /gocache
+      GOMODCACHE: /gocache/mod
     volumes:
       - ./:/usr/src/
       - golang-cache:/gocache
@@ -116,6 +122,7 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+      start_period: 120s
     profiles:
       - tools
 

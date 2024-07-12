@@ -1,5 +1,19 @@
 # Playground in golang-based web frameworks
 
+## Preparation
+
+Install pre-commit hooks:
+
+```console
+$ pre-commit install
+```
+
+The first time you commit you may need to run:
+
+```console
+$ GOFLAGS=-buildvcs=false pre-commit
+```
+
 ## Starting and stopping the application
 
 If starting from scratch:
