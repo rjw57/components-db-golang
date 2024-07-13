@@ -65,6 +65,7 @@ func openTemporaryDatabase(logger logger.Interface) (*gorm.DB, func() error, err
 			"POSTGRES_DB=testing",
 			"POSTGRES_USER=testing-user",
 			"POSTGRES_PASSWORD=testing-pass",
+			"listen_addresses = '*'",
 		},
 	}, func(config *docker.HostConfig) {
 		// set AutoRemove to true so that stopped container is removed from the file system
@@ -90,8 +91,8 @@ func openTemporaryDatabase(logger logger.Interface) (*gorm.DB, func() error, err
 	if err := pool.Retry(func() error {
 		var err error
 		dsn := fmt.Sprintf(
-			"postgres://testing-user:testing-pass@localhost:%s/testing",
-			resource.GetPort("5432/tcp"),
+			"postgres://testing-user:testing-pass@%s/testing",
+			resource.GetHostPort("5432/tcp"),
 		)
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger})
 		if err != nil {
