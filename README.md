@@ -70,7 +70,7 @@ $ docker compose run backend-test
 ## Updating database migrations
 
 ```console
-$ docker compose run atlas migrate diff --env gorm
+$ docker compose run atlas-make-migrations
 ```
 
 ## Backend container

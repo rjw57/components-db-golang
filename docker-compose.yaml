@@ -126,6 +126,11 @@ services:
     profiles:
       - tools
 
+  atlas-make-migrations:
+    extends:
+      service: atlas
+    command: ["migrate", "diff", "--env", "gorm"]
+
   backend-test:
     image: golang:1.22
     working_dir: /usr/src/backend
