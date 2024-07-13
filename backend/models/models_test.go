@@ -133,7 +133,7 @@ func (s *ModelSuite) SetupSuite() {
 	}
 
 	log.Print("Applying migrations")
-	if err := s.db.AutoMigrate(); err != nil {
+	if err := s.db.AutoMigrate(&Cabinet{}); err != nil {
 		s.T().Errorf("Error migrating database: %s", err)
 		s.T().FailNow()
 		return
