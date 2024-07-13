@@ -1,11 +1,9 @@
-// package testing provides common utilities for unit tests
 package models
 
 import (
 	"fmt"
 	"log"
 	"os"
-	"testing"
 	"time"
 
 	"github.com/ory/dockertest/v3"
@@ -109,7 +107,7 @@ func openTemporaryDatabase(logger logger.Interface) (*gorm.DB, func() error, err
 
 type ModelSuite struct {
 	suite.Suite
-	db *gorm.DB
+	DB *gorm.DB
 }
 
 func (s *ModelSuite) SetupSuite() {
@@ -123,17 +121,17 @@ func (s *ModelSuite) SetupSuite() {
 		log.Print("Closing database connection")
 		dbClose()
 	})
-	s.db = db
 
-	log.Print("Starting test database transaction")
-	if err := s.db.Begin().Error; err != nil {
+	log.Print("Starting suite transaction")
+	s.DB = db.Begin()
+	if err := s.DB.SavePoint("testsuite").Error; err != nil {
 		s.T().Errorf("Error starting transaction: %s", err)
 		s.T().FailNow()
 		return
 	}
 
 	log.Print("Applying migrations")
-	if err := s.db.AutoMigrate(&Cabinet{}); err != nil {
+	if err := s.DB.AutoMigrate(&Cabinet{}); err != nil {
 		s.T().Errorf("Error migrating database: %s", err)
 		s.T().FailNow()
 		return
@@ -141,13 +139,25 @@ func (s *ModelSuite) SetupSuite() {
 }
 
 func (s *ModelSuite) TearDownSuite() {
-	if s.db != nil {
-		log.Print("Rolling back test database transaction")
-		s.db.Rollback()
-		s.db = nil
+	log.Print("Rolling back suite transaction")
+	if err := s.DB.RollbackTo("testsuite").Error; err != nil {
+		s.T().Errorf("Error rolling back transaction: %s", s.DB.Error)
+		s.T().FailNow()
+		return
+	}
+	s.DB = nil
+}
+
+func (s *ModelSuite) BeforeTest(suiteName, testName string) {
+	log.Print("Starting nested test transaction")
+	if err := s.DB.SavePoint("test").Error; err != nil {
+		s.T().Errorf("Error starting transaction: %s", err)
+		s.T().FailNow()
+		return
 	}
 }
 
-func TestModelSuite(t *testing.T) {
-	suite.Run(t, &ModelSuite{})
+func (s *ModelSuite) AfterTest(suiteName, testName string) {
+	log.Print("Rolling back nested test transaction")
+	s.DB.RollbackTo("test")
 }

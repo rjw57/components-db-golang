@@ -93,7 +93,10 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/UUID"
+          type: string
+          format: uuid
+          x-oapi-codegen-extra-tags:
+            gorm: column:uuid
         name:
           type: string
     ServerStatus:
@@ -121,7 +124,10 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/UUID"
+          type: string
+          format: uuid
+          x-oapi-codegen-extra-tags:
+            gorm: column:uuid
         label:
           type: string
     DrawerDetail:

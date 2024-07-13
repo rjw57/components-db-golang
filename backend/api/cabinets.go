@@ -10,38 +10,32 @@ import (
 )
 
 func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
-	var cabinets []models.Cabinet
+	db := s.DB
 
 	pageSize := DefaultPageSize
 	if params.Limit != nil {
 		pageSize = *params.Limit
 	}
+	db = db.Limit(pageSize)
 
-	tx := s.DB.Limit(pageSize + 1).Order("id ASC")
 	if params.Cursor != nil {
-		tx = tx.Where("id >= (?)", s.DB.Table("cabinets").Select("id").Where("uuid = ?", params.Cursor))
+		db = db.Scopes(models.StartingAtUUID(*params.Cursor))
 	}
 
-	result := tx.Find(&cabinets)
+	var items []CabinetSummary
+	result := db.Find(&items)
 	if result.Error != nil {
 		log.Error().Err(result.Error).Msg("Error querying cabinets")
 		ctx.AbortWithError(500, result.Error)
 		return
 	}
 
-	items := make([]CabinetSummary, 0, pageSize)
-	for i, cab := range cabinets {
-		if i >= pageSize {
-			break
-		}
-		items = append(items, CabinetSummary{Id: &cab.UUID})
+	resp := CabinetList{}
+	if len(items) > pageSize {
+		resp.NextCursor = items[pageSize].Id
+		items = items[:pageSize]
 	}
-
-	resp := CabinetList{Items: &items}
-
-	if len(cabinets) > pageSize {
-		resp.NextCursor = &cabinets[pageSize].UUID
-	}
+	resp.Items = &items
 
 	ctx.JSON(http.StatusOK, resp)
 }

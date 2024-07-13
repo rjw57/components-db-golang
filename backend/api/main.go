@@ -14,3 +14,7 @@ type Server struct {
 func NewServer(db *gorm.DB) Server {
 	return Server{DB: db}
 }
+
+func (CabinetSummary) TableName() string {
+	return "cabinets"
+}
