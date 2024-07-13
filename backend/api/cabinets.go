@@ -47,7 +47,8 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 }
 
 func (s Server) CabinetGet(ctx *gin.Context, cabinetId UUID) {
-	c, err := models.FakeCabinet()
+	c := &models.Cabinet{}
+	err := models.FakeCabinet(c)
 	if err != nil {
 		ctx.AbortWithError(500, err)
 		return

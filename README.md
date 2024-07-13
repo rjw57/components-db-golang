@@ -50,13 +50,21 @@ $ docker compose --profile production up --build prod-backend
 Stopping:
 
 ```console
-$ docker compose down
+$ docker compose --profile=* down
 ```
 
 Stopping and removing local state:
 
 ```console
-$ docker compose down --volumes --remove-orphans
+$ docker compose --profile=* down --volumes --remove-orphans
+```
+
+## Testing
+
+Running backend tests
+
+```console
+$ docker compose run backend-test
 ```
 
 ## Updating database migrations

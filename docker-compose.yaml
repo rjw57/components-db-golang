@@ -1,6 +1,11 @@
 x-backend-env: &backend-env
   DATABASE_DSN: "user=components-user password=components-pass dbname=components host=db sslmode=disable"
 
+x-go-env: &go-env
+  GOCACHE: /gocache/go-build
+  GOMODCACHE: /gocache/mod
+  GOFLAGS: -buildvcs=false
+
 services:
   db:
     image: postgres:16
@@ -53,7 +58,6 @@ services:
       dockerfile_inline: |
         FROM golang:1.22
         RUN go install github.com/air-verse/air@v1.52.3
-        WORKDIR /usr/src/backend
     command:
       [
         "air",
@@ -78,10 +82,7 @@ services:
       - golang-cache:/gocache
       - air-tmp:/usr/air-tmp
     environment:
-      <<: *backend-env
-      GOCACHE: /gocache/go-build
-      GOMODCACHE: /gocache/mod
-      GOFLAGS: -buildvcs=false
+      <<: [*backend-env, *go-env]
     depends_on:
       db:
         condition: service_healthy
@@ -97,8 +98,7 @@ services:
         ENTRYPOINT ["/opt/atlas/bin/atlas"]
     working_dir: /usr/src/backend
     environment:
-      GOCACHE: /gocache
-      GOMODCACHE: /gocache/mod
+      <<: *go-env
     volumes:
       - ./:/usr/src/
       - golang-cache:/gocache
@@ -125,6 +125,40 @@ services:
       start_period: 120s
     profiles:
       - tools
+
+  backend-test:
+    image: golang:1.22
+    working_dir: /usr/src/backend
+    command: ["go", "test", "./..."]
+    volumes:
+      - ./:/usr/src/:ro
+      - golang-cache:/gocache
+    environment:
+      <<: *go-env
+      TESTING_DATABASE_DSN: postgresql://test-user:test-pass@test-db:5432/test?sslmode=disable
+    profiles:
+      - test
+    depends_on:
+      test-db:
+        condition: service_healthy
+
+  test-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: test-user
+      POSTGRES_PASSWORD: test-pass
+    profiles:
+      - test
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - --dbname=postgresql://test-user:test-pass@localhost:5432/test
+      interval: 1s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
 
   prod-backend:
     build:

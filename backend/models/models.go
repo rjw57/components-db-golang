@@ -15,12 +15,7 @@ type Cabinet struct {
 	UpdatedAt time.Time `fake:"skip" gotm:"not null"`
 }
 
-// FakeCabinet returns a cabinet with fake data which can be inserted into the database.
-func FakeCabinet() (*Cabinet, error) {
-	var r Cabinet
-	err := gofakeit.Struct(&r)
-	if err != nil {
-		return nil, err
-	}
-	return &r, err
+// FakeCabinet writes fake data into a Cabinet struct.
+func FakeCabinet(c *Cabinet) error {
+	return gofakeit.Struct(c)
 }

@@ -12,4 +12,23 @@ jobs:
         with:
           cache-dependency-path: backend/go.sum
       - name: Run unit tests
-        run: cd backend/ && go test ./...
+        run: go test ./...
+        working-directory: ./backend
+        env:
+          TESTING_DATABASE_DSN: postgresql://test-user:test-pass@localhost:${{ job.services.postgres.ports['5432'] }}/test?sslmode=disable
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test
+          POSTGRES_USER: test-user
+          POSTGRES_PASSWORD: test-pass
+        options: >-
+          --health-cmd="pg_isready --dbname=postgresql://test-user:test-pass@localhost:5432/test"
+          --health-interval=1s
+          --health-timeout=5s
+          --health-retries=10
+          --health-start-period=120s
+        ports:
+          - 5432/tcp
