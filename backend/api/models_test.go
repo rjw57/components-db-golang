@@ -15,14 +15,10 @@ func TestModelSuite(t *testing.T) {
 
 func (s *ModelSuite) TestCabinetSummaryFields() {
 	c, err := models.MakeAndInsertFakeCabinet(s.DB)
-	if !s.NoError(err) {
-		return
-	}
+	s.Require().NoError(err, "Error inserting fake Cabinets")
 
 	cs := &CabinetSummary{}
-	if !s.NoError(s.DB.Where("id = ?", c.ID).Take(cs).Error, "Error querying database") {
-		return
-	}
+	s.Require().NoError(s.DB.Where("id = ?", c.ID).Take(cs).Error, "Error querying database")
 	s.EqualValues(&c.UUID, cs.Id, "UUID not populated")
 	s.Greater(len(*cs.Name), 0, "Name is empty")
 }

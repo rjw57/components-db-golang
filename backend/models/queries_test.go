@@ -15,17 +15,15 @@ func TestQueriesSuite(t *testing.T) {
 
 func (s *QueriesSuite) TestStartingAtUUID() {
 	cs, err := MakeAndInsertFakeCabinets(s.DB, 100)
-	if !s.NoError(err, "Error creating fake cabinets") {
-		return
-	}
+	s.Require().NoError(err, "Error creating fake cabinets")
 
 	testStartingAtIdx := func(idx int) {
 		var found_cs []Cabinet
 		starting_c := cs[idx]
-		err = s.DB.Scopes(StartingAtUUID(starting_c.UUID)).Find(&found_cs).Error
-		if !s.NoError(err, "Error fetching cabinets") {
-			return
-		}
+		s.Require().NoError(
+			s.DB.Scopes(StartingAtUUID(starting_c.UUID)).Find(&found_cs).Error,
+			"Error fetching cabinets",
+		)
 
 		s.EqualValues(len(cs)-idx, len(found_cs), "Incorrect number of results")
 		for _, c := range found_cs {
@@ -39,14 +37,9 @@ func (s *QueriesSuite) TestStartingAtUUID() {
 	s.Run("non existent UUID returns no results", func() {
 		var found_cs []Cabinet
 		uuid, err := uuid.NewRandom()
-		if !s.NoError(err, "Failed to create UUID") {
-			return
-		}
+		s.Require().NoError(err, "Failed to create UUID")
 		err = s.DB.Scopes(StartingAtUUID(uuid)).Find(&found_cs).Error
-		if !s.NoError(err, "Error fetching cabinets") {
-			return
-		}
-
+		s.Require().NoError(err, "Error fetching cabinets")
 		s.EqualValues(0, len(found_cs), "Incorrect number of results")
 	})
 }
