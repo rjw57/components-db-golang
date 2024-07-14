@@ -8,6 +8,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gen"
+	"gorm.io/gen/field"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -34,7 +35,13 @@ func main() {
 	g.UseDB(db)
 
 	g.ApplyBasic(
-		g.GenerateModel("cabinets"),
+		g.GenerateModel("cabinets",
+			gen.FieldNewTag("id", field.Tag{"fake": "skip"}),
+			gen.FieldNewTag("uuid", field.Tag{"fake": "skip"}),
+			gen.FieldType("uuid", "uuid.UUID"),
+			gen.FieldNewTag("created_at", field.Tag{"fake": "skip"}),
+			gen.FieldNewTag("updated_at", field.Tag{"fake": "skip"}),
+		),
 	)
 
 	// Execute the generator

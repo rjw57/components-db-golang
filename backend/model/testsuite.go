@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"log"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 
-	"github.com/rjw57/components-db-golang/backend/testing"
+	"github.com/rjw57/components-db-golang/backend/test"
 )
 
 type ModelSuite struct {
@@ -15,7 +15,7 @@ type ModelSuite struct {
 }
 
 func (s *ModelSuite) SetupSuite() {
-	db, dbClose, err := testing.OpenTestingDatabase()
+	db, dbClose, err := test.OpenTestingDatabase()
 	if err != nil {
 		s.T().Errorf("Error opening test database: %s", err)
 		return

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/rjw57/components-db-golang/backend/models"
+	"github.com/rjw57/components-db-golang/backend/model"
 )
 
 func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
@@ -19,7 +19,7 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 	db = db.Limit(pageSize)
 
 	if params.Cursor != nil {
-		db = db.Scopes(models.StartingAtUUID(*params.Cursor))
+		db = db.Scopes(StartingAtUUID(*params.Cursor))
 	}
 
 	var items []CabinetSummary
@@ -41,8 +41,8 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 }
 
 func (s Server) CabinetGet(ctx *gin.Context, cabinetId UUID) {
-	c := &models.Cabinet{}
-	err := models.FakeCabinet(c)
+	c := &model.Cabinet{}
+	err := model.FakeCabinet(c)
 	if err != nil {
 		ctx.AbortWithError(500, err)
 		return

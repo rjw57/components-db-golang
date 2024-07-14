@@ -28,7 +28,7 @@ func newCabinet(db *gorm.DB, opts ...gen.DOOption) cabinet {
 	tableName := _cabinet.cabinetDo.TableName()
 	_cabinet.ALL = field.NewAsterisk(tableName)
 	_cabinet.ID = field.NewInt64(tableName, "id")
-	_cabinet.UUID = field.NewString(tableName, "uuid")
+	_cabinet.UUID = field.NewField(tableName, "uuid")
 	_cabinet.Name = field.NewString(tableName, "name")
 	_cabinet.CreatedAt = field.NewTime(tableName, "created_at")
 	_cabinet.UpdatedAt = field.NewTime(tableName, "updated_at")
@@ -43,7 +43,7 @@ type cabinet struct {
 
 	ALL       field.Asterisk
 	ID        field.Int64
-	UUID      field.String
+	UUID      field.Field
 	Name      field.String
 	CreatedAt field.Time
 	UpdatedAt field.Time
@@ -64,7 +64,7 @@ func (c cabinet) As(alias string) *cabinet {
 func (c *cabinet) updateTableName(table string) *cabinet {
 	c.ALL = field.NewAsterisk(table)
 	c.ID = field.NewInt64(table, "id")
-	c.UUID = field.NewString(table, "uuid")
+	c.UUID = field.NewField(table, "uuid")
 	c.Name = field.NewString(table, "name")
 	c.CreatedAt = field.NewTime(table, "created_at")
 	c.UpdatedAt = field.NewTime(table, "updated_at")

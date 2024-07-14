@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"testing"
@@ -17,14 +17,10 @@ func TestFakesSuite(t *testing.T) {
 func (s *FakesSuite) TestMakeFakeCabinet() {
 	c, err := MakeFakeCabinet()
 	s.Require().NoError(err, "Error creating fake cabinet")
-	s.Equal(c.UUID, uuid.UUID{}, "Cabinet UUID is not zero value")
+	s.EqualValues(uuid.UUID{}, c.UUID, "Cabinet UUID is not zero value")
 	s.EqualValues(c.ID, 0, "Cabinet id is not zero value")
 	s.Equal(time.Time{}, c.CreatedAt, "Cabinet created at is not zero value")
-	s.Equal(
-		time.Time{},
-		c.UpdatedAt,
-		"Cabinet updated at is not zero value",
-	)
+	s.Nil(c.UpdatedAt, "Cabinet updated at is not zero value")
 	s.NotEqual("", c.Name, "Cabinet name is blank")
 }
 
