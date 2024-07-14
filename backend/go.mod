@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.0.4
-	github.com/getkin/kin-openapi v0.126.0
+	github.com/getkin/kin-openapi v0.125.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
 	github.com/oapi-codegen/gin-middleware v1.0.2
