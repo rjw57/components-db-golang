@@ -41,6 +41,7 @@ func main() {
 			gen.FieldNewTag("id", field.Tag{"fake": "skip"}),
 			gen.FieldNewTag("uuid", field.Tag{"fake": "skip"}),
 			gen.FieldType("uuid", "uuid.UUID"),
+			gen.FieldNewTag("name", field.Tag{"fake": "{adjective} {noun}"}),
 			gen.FieldNewTag("created_at", field.Tag{"fake": "skip"}),
 			gen.FieldNewTag("updated_at", field.Tag{"fake": "skip"}),
 		),

@@ -1,6 +1,6 @@
 module github.com/rjw57/components-db-golang/backend
 
-go 1.22.5
+go 1.22
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.0.4
