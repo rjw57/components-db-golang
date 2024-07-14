@@ -8,9 +8,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-go@v5
-      with:
-        go-version: "1.22"
     - run: python -m pip install pre-commit
       shell: bash
     - run: python -m pip freeze --local
@@ -21,5 +18,3 @@ runs:
         key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
     - run: pre-commit run --show-diff-on-failure --color=always ${{ inputs.extra_args }}
       shell: bash
-      env:
-        GOFLAGS: "-buildvcs=false"
