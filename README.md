@@ -2,11 +2,18 @@
 
 ## Preparation
 
-Install pre-commit hooks:
+1. [Install Task](https://taskfile.dev/installation/)
+2. [Install pre-commit](https://pre-commit.com/#install)
+3. Install pre-commit hooks:
 
-```console
-$ pre-commit install
-```
+    ```sh
+    pre-commit install
+    ```
+4. Start the application:
+
+    ```sh
+    task default
+    ```
 
 The first time you commit you may need to run:
 

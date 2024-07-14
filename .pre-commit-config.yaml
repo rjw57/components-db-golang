@@ -25,30 +25,25 @@ repos:
     hooks:
       - id: go-generate
         name: go generate
-        language: docker_image
-        entry: golang:1.22
-        args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go generate ./..."]
+        language: system
+        files: "^(openapi/)"
+        entry: go generate ./backend/...
         pass_filenames: false
       - id: go-fmt
         name: go fmt
-        exclude: "^(?!backend/)"
-        files: "\\.go$"
-        language: docker_image
-        entry: golang:1.22
-        args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go fmt ./..."]
+        files: "^backend/.*\\.go$"
+        language: system
+        entry: sh -c 'cd backend && go fmt ./...'
         pass_filenames: false
       - id: go-vet
         name: go vet
-        exclude: "^(?!backend/)"
-        files: "\\.go$"
-        language: docker_image
-        entry: golang:1.22
-        args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go vet ./..."]
+        files: "^backend/.*\\.go$"
+        language: system
+        entry: go vet ./backend/...
         pass_filenames: false
       - id: go-mod-tidy
         name: go mod tidy
-        language: docker_image
-        exclude: "^(?!backend/)"
-        entry: golang:1.22
-        args: ["sh", "-c", "cd backend && GOCACHE=$PWD/.pre-commit-cache/go-build GOMODCACHE=$PWD/.pre-commit-cache/mod go mod tidy"]
+        files: "^backend/.*\\.go$"
+        language: system
+        entry: sh -c 'cd backend && go mod tidy'
         pass_filenames: false

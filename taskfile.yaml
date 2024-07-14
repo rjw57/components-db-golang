@@ -1,0 +1,47 @@
+version: "3"
+
+tasks:
+  default:
+    desc: "freshen dependencies, install pre-commit hooks and start application"
+    cmds:
+      - pre-commit install
+      - task: compose-pull
+      - task: compose-build
+      - task: up
+  up:
+    desc: "start application"
+    cmds:
+      - docker compose up
+  down:
+    desc: "stop running containers"
+    cmds:
+      - docker compose --profile=* down --remove-orphans
+  test:
+    desc: "run automated tests"
+    cmds:
+      - task: backend-test
+  backend-test:
+    desc: "run backend test suite"
+    dir: backend/
+    cmds:
+      - go test ./...
+  down-hard:
+    desc: "stop running containers and delete local volumes"
+    cmds:
+      - docker compose --profile=* down --volumes --remove-orphans
+  compose-pull:
+    desc: "pull remote images"
+    cmds:
+      - docker compose --profile=* pull
+  compose-build:
+    desc: "build local images"
+    cmds:
+      - docker compose --profile=* build
+  psql:
+    desc: "open a database shell"
+    cmds:
+      - docker compose run --rm psql {{.CLI_ARGS}}
+  pre-commit-run:
+    desk: "run pre-commit checks on a all files"
+    cmds:
+      - pre-commit run --all-files

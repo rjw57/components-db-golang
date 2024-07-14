@@ -1,29 +1,68 @@
-x-backend-env: &backend-env
-  DATABASE_DSN: "user=components-user password=components-pass dbname=components host=db sslmode=disable"
-
 x-go-env: &go-env
   GOCACHE: /gocache/go-build
   GOMODCACHE: /gocache/mod
   GOFLAGS: -buildvcs=false
 
+# Re-usable constants
+x-constants:
+  # postgresql://-style URL to connect to the backend database.
+  - &db-url postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
+
+x-backend-env: &backend-env
+  DATABASE_DSN: *db-url
+
 services:
+  # Databases. We have two: a database used for the backend itself which persists data in a volume
+  # and an ephemeral database used only for migrations and testing.
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: components
-      POSTGRES_USER: components-user
-      POSTGRES_PASSWORD: components-pass
+      POSTGRES_DB: backend
+      POSTGRES_USER: backend-user
+      POSTGRES_PASSWORD: backend-pass
     healthcheck:
       test:
-        - CMD
-        - pg_isready
-        - --dbname=postgresql://components-user:components-pass@localhost:5432/components
+        - CMD-SHELL
+        - pg_isready --timeout=3 "--dbname=user=$${POSTGRES_USER} password=$${POSTGRES_PASSWORD} dbname=$${POSTGRES_DB} connect_timeout=3"
       interval: 1s
-      timeout: 5s
-      retries: 10
+      timeout: 3s
+      retries: 5
       start_period: 120s
+      start_interval: 1s
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  ephemeral-db:
+    extends:
+      service: db
+    profiles:
+      - test
+      - atlas
+    environment:
+      POSTGRES_DB: ephemeral
+      POSTGRES_USER: ephemeral-user
+      POSTGRES_PASSWORD: ephemeral-pass
+    volumes: []
+
+  # psql command line tool running in the persisted database. Has the project root mounted
+  # read-write under /workspace which is also the working directory.
+  psql:
+    extends:
+      service: db
+    entrypoint:
+      - "psql"
+      - "--dbname"
+      - *db-url
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    profiles:
+      - tools
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # -------------
 
   db-migration:
     image: arigaio/atlas:0.25.0
@@ -34,21 +73,7 @@ services:
       - "migrate"
       - "apply"
       - "--url"
-      - "postgresql://components-user:components-pass@db:5432/components?sslmode=disable"
-    depends_on:
-      db:
-        condition: service_healthy
-
-  psql:
-    image: postgres:16
-    entrypoint:
-      - "psql"
-      - "--dbname=postgresql://components-user:components-pass@db:5432/components"
-    working_dir: /usr/src/
-    volumes:
-      - ./:/usr/src/:ro
-    profiles:
-      - tools
+      - *db-url
     depends_on:
       db:
         condition: service_healthy
