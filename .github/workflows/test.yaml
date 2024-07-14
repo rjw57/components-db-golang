@@ -12,6 +12,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.22
+          cache-dependency-path: |
+            backend/go.sum
+            cmd/go.sum
       - uses: ./.github/actions/pre-commit
   backend-test:
     name: Run backend test suite
@@ -22,6 +25,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.22
+          cache-dependency-path: |
+            backend/go.sum
+            cmd/go.sum
       - name: Run backend test suite
         run: task backend-test-local
         env:

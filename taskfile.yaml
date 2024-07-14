@@ -41,7 +41,7 @@ tasks:
   backend-test-local:
     desc: "run backend test suite using local tooling"
     cmds:
-      - go test ./...
+      - go test ./backend/...
   compose-pull:
     desc: "pull remote images"
     cmds:
