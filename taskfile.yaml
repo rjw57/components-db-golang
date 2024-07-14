@@ -2,33 +2,46 @@ version: "3"
 
 tasks:
   default:
-    desc: "freshen dependencies, install pre-commit hooks and start application"
+    cmds:
+      - task --list
+  init:
+    desc: install pre-commit hooks, pull docker images and rebuild containers
     cmds:
       - pre-commit install
       - task: compose-pull
       - task: compose-build
-      - task: up
   up:
     desc: "start application"
     cmds:
-      - docker compose up
+      - docker compose --profile=dev up --wait
+  up-prod:
+    desc: "start application"
+    cmds:
+      - docker compose --profile=prod up --wait
   down:
     desc: "stop running containers"
     cmds:
       - docker compose --profile=* down --remove-orphans
-  test:
-    desc: "run automated tests"
-    cmds:
-      - task: backend-test
-  backend-test:
-    desc: "run backend test suite"
-    dir: backend/
-    cmds:
-      - go test ./...
   down-hard:
     desc: "stop running containers and delete local volumes"
     cmds:
       - docker compose --profile=* down --volumes --remove-orphans
+  test:
+    desc: "run automated tests"
+    cmds:
+      - task: backend-test
+  test-local:
+    desc: "run automated tests using local tooling"
+    cmds:
+      - task: backend-test-local
+  backend-test:
+    desc: "run backend test suite"
+    cmds:
+      - docker compose run backend-test
+  backend-test-local:
+    desc: "run backend test suite using local tooling"
+    cmds:
+      - go test ./...
   compose-pull:
     desc: "pull remote images"
     cmds:
@@ -41,7 +54,7 @@ tasks:
     desc: "open a database shell"
     cmds:
       - docker compose run --rm psql {{.CLI_ARGS}}
-  pre-commit-run:
-    desk: "run pre-commit checks on a all files"
+  atlas:
+    desc: "run the atlas migration tool"
     cmds:
-      - pre-commit run --all-files
+      - docker compose run --rm atlas {{.CLI_ARGS}}

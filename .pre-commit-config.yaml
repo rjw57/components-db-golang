@@ -27,23 +27,23 @@ repos:
         name: go generate
         language: system
         files: "^(openapi/)"
-        entry: go generate ./backend/...
+        entry: go generate ./...
         pass_filenames: false
       - id: go-fmt
         name: go fmt
-        files: "^backend/.*\\.go$"
+        files: "\\.go$"
         language: system
-        entry: sh -c 'cd backend && go fmt ./...'
+        entry: go fmt ./...
         pass_filenames: false
       - id: go-vet
         name: go vet
-        files: "^backend/.*\\.go$"
+        files: "\\.go$"
         language: system
-        entry: go vet ./backend/...
+        entry: go vet ./...
         pass_filenames: false
       - id: go-mod-tidy
         name: go mod tidy
-        files: "^backend/.*\\.go$"
+        files: "\\.go$"
         language: system
-        entry: sh -c 'cd backend && go mod tidy'
+        entry: go mod tidy
         pass_filenames: false

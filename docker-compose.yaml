@@ -1,29 +1,27 @@
-x-go-env: &go-env
-  GOCACHE: /gocache/go-build
-  GOMODCACHE: /gocache/mod
-  GOFLAGS: -buildvcs=false
-
-# Re-usable constants
-x-constants:
-  # postgresql://-style URL to connect to the backend database.
-  - &db-url postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
-
-x-backend-env: &backend-env
-  DATABASE_DSN: *db-url
+x-go:
+  # Environment variables to configure go to use a persistent cache.
+  envrionment: &go-environment
+    GOCACHE: /gocache/go-build
+    GOMODCACHE: /gocache/mod
+    GOFLAGS: -buildvcs=false
 
 services:
-  # Databases. We have two: a database used for the backend itself which persists data in a volume
-  # and an ephemeral database used only for migrations and testing.
+  # Database instance. Note that the backend and dev databases themselves are created by an
+  # initialisation script.
   db:
-    image: postgres:16
+    profiles:
+      - dev
+      - prod
+      - tool
+    image: &db-image postgres:16
     environment:
-      POSTGRES_DB: backend
-      POSTGRES_USER: backend-user
-      POSTGRES_PASSWORD: backend-pass
+      POSTGRES_PASSWORD: postgres-pass
     healthcheck:
       test:
-        - CMD-SHELL
-        - pg_isready --timeout=3 "--dbname=user=$${POSTGRES_USER} password=$${POSTGRES_PASSWORD} dbname=$${POSTGRES_DB} connect_timeout=3"
+        - CMD
+        - pg_isready
+        - --dbname
+        - postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
       interval: 1s
       timeout: 3s
       retries: 5
@@ -31,58 +29,80 @@ services:
       start_interval: 1s
     volumes:
       - db-data:/var/lib/postgresql/data
-
-  ephemeral-db:
-    extends:
-      service: db
-    profiles:
-      - test
-      - atlas
-    environment:
-      POSTGRES_DB: ephemeral
-      POSTGRES_USER: ephemeral-user
-      POSTGRES_PASSWORD: ephemeral-pass
-    volumes: []
+      - ./compose/db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
 
   # psql command line tool running in the persisted database. Has the project root mounted
   # read-write under /workspace which is also the working directory.
   psql:
-    extends:
-      service: db
+    profiles:
+      - tool
+    image: *db-image
     entrypoint:
       - "psql"
       - "--dbname"
-      - *db-url
+      - postgresql://postgres:postgres-pass@db:5432/backend?sslmode=disable
     working_dir: /workspace
     volumes:
       - ./:/workspace
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Run the atlas migration tool
+  atlas:
     profiles:
-      - tools
-    depends_on:
-      db:
-        condition: service_healthy
-
-  # -------------
-
-  db-migration:
+      - tool
     image: arigaio/atlas:0.25.0
-    working_dir: /usr/src/backend
+    working_dir: /workspace/db
     volumes:
-      - ./:/usr/src/:ro
-    command:
-      - "migrate"
-      - "apply"
-      - "--url"
-      - *db-url
+      - ./:/workspace/:ro
     depends_on:
       db:
         condition: service_healthy
 
-  backend:
+  # Run database migrations
+  db-migrate:
+    profiles:
+      - dev
+      - prod
+    extends:
+      service: atlas
+    command: ["schema", "apply", "--env", "local", "--auto-approve"]
+
+  # The API backend running with the production container.
+  backend-prod:
+    profiles:
+      - prod
+    build:
+      target: backend
+    ports:
+      - 8000:8000
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/status"]
+      interval: 5m
+      retries: 10
+      start_period: 120s
+      start_interval: 1s
+    working_dir: /usr/src/backend
+    environment:
+      DATABASE_DSN: postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+
+  # The API backend running with hot-reload and with local-developer friendly options.
+  backend-dev:
+    profiles:
+      - dev
+    extends:
+      service: backend-prod
     build:
       dockerfile_inline: |
         FROM golang:1.22
         RUN go install github.com/air-verse/air@v1.52.3
+      target: ""
     command:
       [
         "air",
@@ -93,70 +113,17 @@ services:
         "-build.bin",
         "/air-tmp/main",
       ]
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8000/status"]
-      interval: 5m
-      retries: 10
-      start_period: 120s
-      start_interval: 1s
-    working_dir: /usr/src/backend
-    ports:
-      - 8000:8000
     volumes:
       - ./:/usr/src/:ro
       - golang-cache:/gocache
       - air-tmp:/usr/air-tmp
     environment:
-      <<: [*backend-env, *go-env]
-    depends_on:
-      db:
-        condition: service_healthy
-      db-migration:
-        condition: service_completed_successfully
+      <<: *go-environment
 
-  atlas:
-    build:
-      dockerfile_inline: |
-        FROM golang:1.22
-        WORKDIR /usr/src/backend
-        COPY --from=arigaio/atlas:0.25.0 /atlas /opt/atlas/bin/atlas
-        ENTRYPOINT ["/opt/atlas/bin/atlas"]
-    working_dir: /usr/src/backend
-    environment:
-      <<: *go-env
-    volumes:
-      - ./:/usr/src/
-      - golang-cache:/gocache
-    profiles:
-      - tools
-    depends_on:
-      atlas-dev-db:
-        condition: service_healthy
-
-  atlas-dev-db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: atlas-dev
-      POSTGRES_USER: atlas-dev-user
-      POSTGRES_PASSWORD: atlas-dev-password
-    healthcheck:
-      test:
-        - CMD
-        - pg_isready
-        - --dbname=postgresql://atlas-dev-user:atlas-dev-password@localhost:5432/atlas-dev
-      interval: 1s
-      timeout: 5s
-      retries: 10
-      start_period: 120s
-    profiles:
-      - tools
-
-  atlas-make-migrations:
-    extends:
-      service: atlas
-    command: ["migrate", "diff", "--env", "gorm"]
-
+  # Run the backend test suite.
   backend-test:
+    profiles:
+      - tool
     image: golang:1.22
     working_dir: /usr/src/backend
     command: ["go", "test", "./..."]
@@ -164,46 +131,11 @@ services:
       - ./:/usr/src/:ro
       - golang-cache:/gocache
     environment:
-      <<: *go-env
-      TESTING_DATABASE_DSN: postgresql://test-user:test-pass@test-db:5432/test?sslmode=disable
-    profiles:
-      - test
-    depends_on:
-      test-db:
-        condition: service_healthy
-
-  test-db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: test
-      POSTGRES_USER: test-user
-      POSTGRES_PASSWORD: test-pass
-    profiles:
-      - test
-    healthcheck:
-      test:
-        - CMD
-        - pg_isready
-        - --dbname=postgresql://test-user:test-pass@localhost:5432/test
-      interval: 1s
-      timeout: 5s
-      retries: 10
-      start_period: 120s
-
-  prod-backend:
-    build:
-      target: backend
-    ports:
-      - 8000:8000
-    profiles:
-      - production
-    environment:
-      <<: *backend-env
+      <<: *go-environment
+      TESTING_DATABASE_DSN: postgresql://postgres:postgres-pass@db:5432/test?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
-      db-migration:
-        condition: service_completed_successfully
 
 volumes:
   db-data:

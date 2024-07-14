@@ -4,15 +4,16 @@
 
 1. [Install Task](https://taskfile.dev/installation/)
 2. [Install pre-commit](https://pre-commit.com/#install)
-3. Install pre-commit hooks:
+3. Install pre-commit hooks, pull docker images and build containers:
 
     ```sh
-    pre-commit install
+    task init
     ```
+
 4. Start the application:
 
     ```sh
-    task default
+    task up
     ```
 
 The first time you commit you may need to run:
