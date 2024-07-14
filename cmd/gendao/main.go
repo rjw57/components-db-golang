@@ -24,6 +24,8 @@ func main() {
 		FieldWithTypeTag:  true,
 	})
 
+	g.WithImportPkgPath("github.com/google/uuid")
+
 	// Initialize a *gorm.DB instance
 	db, err := OpenDatabase()
 	if err != nil {
