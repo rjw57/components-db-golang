@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/rjw57/components-db-golang/backend/api"
-	"github.com/rjw57/components-db-golang/backend/middleware/logger"
+	"github.com/rjw57/components-db-golang/backend/middleware"
 )
 
 func main() {
@@ -35,8 +35,9 @@ func main() {
 // NewGinEngine constructs a new gin.Engine instance with our desired middleware added.
 func NewGinEngine() *gin.Engine {
 	r := gin.New()
-	r.Use(logger.DefaultStructuredLogger())
+
 	r.Use(gin.Recovery())
+	r.Use(middleware.DefaultStructuredLogger())
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
