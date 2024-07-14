@@ -29,7 +29,9 @@ jobs:
             backend/go.sum
             cmd/go.sum
       - name: Run backend test suite
-        run: task backend-test-local
+        run: |
+          go clean -testcache
+          task backend-test-local
         env:
           TESTING_DATABASE_DSN: postgresql://test-user:test-pass@localhost:${{ job.services.testdb.ports['5432'] }}/test?sslmode=disable
     services:
