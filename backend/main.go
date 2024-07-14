@@ -1,3 +1,4 @@
+//go:generate docker compose run --no-TTY --rm generate-gorm-models
 package main
 
 import (

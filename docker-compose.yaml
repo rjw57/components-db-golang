@@ -65,6 +65,7 @@ services:
     profiles:
       - dev
       - prod
+      - tool
     extends:
       service: atlas
     command: ["schema", "apply", "--env", "local", "--auto-approve"]
@@ -125,7 +126,7 @@ services:
     profiles:
       - tool
     image: golang:1.22
-    working_dir: /usr/src/backend
+    working_dir: /usr/src
     command: ["go", "test", "./..."]
     volumes:
       - ./:/usr/src/:ro
@@ -136,6 +137,26 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+
+  generate-gorm-models:
+    profiles:
+      - tool
+    image: golang:1.22
+    working_dir: /usr/src
+    command: ["go", "run", "github.com/rjw57/components-db-golang/cmd/gendao"]
+    volumes:
+      - ./:/usr/src/
+      - golang-cache:/gocache
+    environment:
+      <<: *go-environment
+      DATABASE_DSN: postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
 
 volumes:
   db-data:
