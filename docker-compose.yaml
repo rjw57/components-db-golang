@@ -126,7 +126,7 @@ services:
     profiles:
       - tool
     image: golang:1.22
-    working_dir: /usr/src
+    working_dir: /usr/src/backend
     command: ["go", "test", "./..."]
     volumes:
       - ./:/usr/src/:ro
@@ -140,6 +140,7 @@ services:
       db-migrate:
         condition: service_completed_successfully
 
+  # Generate backeng/model and backend/query packages from database schema.
   generate-gorm-models:
     profiles:
       - tool

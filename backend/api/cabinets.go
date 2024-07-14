@@ -6,24 +6,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
+	"github.com/rjw57/components-db-golang/backend/middleware"
 	"github.com/rjw57/components-db-golang/backend/model"
 )
 
 func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
-	db := s.DB
+	tx := middleware.Tx(ctx)
 
 	pageSize := DefaultPageSize
 	if params.Limit != nil {
 		pageSize = *params.Limit
 	}
-	db = db.Limit(pageSize)
+	tx = tx.Limit(pageSize)
 
 	if params.Cursor != nil {
-		db = db.Scopes(StartingAtUUID(*params.Cursor))
+		tx = tx.Scopes(StartingAtUUID(*params.Cursor))
 	}
 
 	var items []CabinetSummary
-	result := db.Find(&items)
+	result := tx.Find(&items)
 	if result.Error != nil {
 		log.Error().Err(result.Error).Msg("Error querying cabinets")
 		ctx.AbortWithError(500, result.Error)
@@ -41,6 +42,8 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 }
 
 func (s Server) CabinetGet(ctx *gin.Context, cabinetId UUID) {
+	tx := middleware.Tx(ctx)
+
 	c := &model.Cabinet{}
 	err := model.FakeCabinet(c)
 	if err != nil {
@@ -50,7 +53,7 @@ func (s Server) CabinetGet(ctx *gin.Context, cabinetId UUID) {
 
 	log.Info().Any("cabinet", c).Msg("Made fake cabinet")
 
-	r := s.DB.Create(c)
+	r := tx.Create(c)
 	if r.Error != nil {
 		ctx.AbortWithError(500, r.Error)
 		return

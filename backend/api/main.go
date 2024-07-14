@@ -1,18 +1,12 @@
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=oapi-codegen.yaml ../../openapi/spec.yaml
 package api
 
-import (
-	"gorm.io/gorm"
-)
-
 const DefaultPageSize = 100
 
-type Server struct {
-	DB *gorm.DB
-}
+type Server struct{}
 
-func NewServer(db *gorm.DB) Server {
-	return Server{DB: db}
+func NewServer() Server {
+	return Server{}
 }
 
 func (CabinetSummary) TableName() string {
