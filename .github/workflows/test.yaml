@@ -5,11 +5,13 @@ on:
 
 jobs:
   pre-commit:
+    name: Run pre-commit checks
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/pre-commit
   backend-test:
+    name: Run backend test suite
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
