@@ -152,7 +152,32 @@ services:
       - golang-cache:/gocache
     environment:
       <<: *go-environment
-      DATABASE_DSN: postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
+      DATABASE_DSN: postgresql://postgres:postgres-pass@db:5432/backend?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+
+  generate-jet-schema:
+    profiles:
+      - tool
+    image: golang:1.22
+    working_dir: /usr/src
+    command:
+      [
+        "go",
+        "run",
+        "github.com/rjw57/components-db-golang/cmd/genmodels",
+        "-dsn",
+        "postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable",
+        "-destDir",
+        "./backend/schema",
+      ]
+    volumes:
+      - ./:/usr/src/
+      - golang-cache:/gocache
+    environment: *go-environment
     depends_on:
       db:
         condition: service_healthy

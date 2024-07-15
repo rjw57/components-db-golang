@@ -1,4 +1,4 @@
-//go:generate docker compose run --no-TTY --rm generate-gorm-models
+//go:generate docker compose run --no-TTY --rm generate-jet-schema
 package main
 
 import (
