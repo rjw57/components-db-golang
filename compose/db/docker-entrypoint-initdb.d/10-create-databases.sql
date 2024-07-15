@@ -1,2 +1,2 @@
-CREATE DATABASE backend;
+CREATE DATABASE components;
 CREATE DATABASE test;

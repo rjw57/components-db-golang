@@ -21,7 +21,7 @@ services:
         - CMD
         - pg_isready
         - --dbname
-        - postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
+        - postgresql://components-user:components-pass@db:5432/components?sslmode=disable
       interval: 1s
       timeout: 3s
       retries: 5
@@ -40,7 +40,7 @@ services:
     entrypoint:
       - "psql"
       - "--dbname"
-      - postgresql://postgres:postgres-pass@db:5432/backend?sslmode=disable
+      - postgresql://postgres:postgres-pass@db:5432/components?sslmode=disable
     working_dir: /workspace
     volumes:
       - ./:/workspace
@@ -86,7 +86,7 @@ services:
       start_interval: 1s
     working_dir: /usr/src/backend
     environment:
-      DATABASE_DSN: postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable
+      DATABASE_DSN: postgresql://components-user:components-pass@db:5432/components?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
@@ -152,7 +152,7 @@ services:
       - golang-cache:/gocache
     environment:
       <<: *go-environment
-      DATABASE_DSN: postgresql://postgres:postgres-pass@db:5432/backend?sslmode=disable
+      DATABASE_DSN: postgresql://postgres:postgres-pass@db:5432/components?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
@@ -170,7 +170,7 @@ services:
         "run",
         "github.com/rjw57/components-db-golang/cmd/genmodels",
         "-dsn",
-        "postgresql://backend-user:backend-pass@db:5432/backend?sslmode=disable",
+        "postgresql://components-user:components-pass@db:5432/components?sslmode=disable",
         "-destDir",
         "./backend/schema",
       ]
