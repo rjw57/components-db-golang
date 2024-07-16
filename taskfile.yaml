@@ -37,7 +37,7 @@ tasks:
   backend-test:
     desc: "run backend test suite"
     cmds:
-      - docker compose run backend-test
+      - docker compose run backend-test {{.CLI_ARGS}}
   backend-test-local:
     desc: "run backend test suite using local tooling"
     cmds:
