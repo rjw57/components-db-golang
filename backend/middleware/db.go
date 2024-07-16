@@ -1,38 +1,41 @@
 package middleware
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/rs/zerolog/log"
 )
 
-const ctxTransactionKey = "gormTx"
+const ctxTransactionKey = "databaseTransaction"
 
-func Tx(ctx *gin.Context) *gorm.DB {
+func Tx(ctx *gin.Context) *sql.Tx {
 	tx, ok := ctx.Get(ctxTransactionKey)
 	if !ok {
 		return nil
 	}
-	return tx.(*gorm.DB)
+	return tx.(*sql.Tx)
 }
 
-func Database(db *gorm.DB) gin.HandlerFunc {
+func Database(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db.WithContext(c).Transaction(func(tx *gorm.DB) error {
-			c.Set(ctxTransactionKey, tx)
-			c.Next()
-			c.Set(ctxTransactionKey, nil)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to start database transaction")
+			c.AbortWithStatus(500)
+		}
 
-			if err := recover(); err != nil {
-				tx.Rollback()
-			} else if c.Writer.Status() == http.StatusInternalServerError {
-				tx.Rollback()
-			} else {
-				tx.Commit()
-			}
+		c.Set(ctxTransactionKey, tx)
+		c.Next()
+		c.Set(ctxTransactionKey, nil)
 
-			return nil
-		})
+		if err := recover(); err != nil {
+			tx.Rollback()
+		} else if c.Writer.Status() == http.StatusInternalServerError {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
 	}
 }

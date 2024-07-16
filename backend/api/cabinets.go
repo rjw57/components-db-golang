@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	pg "github.com/go-jet/jet/v2/postgres"
 	"github.com/rs/zerolog/log"
 
+	"github.com/rjw57/components-db-golang/backend/db"
+	"github.com/rjw57/components-db-golang/backend/db/schema/components/public/table"
 	"github.com/rjw57/components-db-golang/backend/middleware"
-	"github.com/rjw57/components-db-golang/backend/model"
 )
 
 func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
@@ -17,17 +19,22 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 	if params.Limit != nil {
 		pageSize = *params.Limit
 	}
-	tx = tx.Limit(pageSize)
+
+	items := []CabinetSummary{}
+	stmt := table.Cabinets.
+		SELECT(
+			table.Cabinets.UUID.AS("CabinetSummary.Id"),
+			table.Cabinets.Name.AS("CabinetSummary.Name"),
+		).
+		LIMIT(int64(pageSize + 1))
 
 	if params.Cursor != nil {
-		tx = tx.Scopes(StartingAtUUID(*params.Cursor))
+		stmt = CabinetsStartingAtUUID(stmt, *params.Cursor)
 	}
 
-	var items []CabinetSummary
-	result := tx.Find(&items)
-	if result.Error != nil {
-		log.Error().Err(result.Error).Msg("Error querying cabinets")
-		ctx.AbortWithError(500, result.Error)
+	if err := stmt.QueryContext(ctx, tx, &items); err != nil {
+		log.Error().Err(err).Msg("Error querying cabinets")
+		ctx.AbortWithStatus(500)
 		return
 	}
 
@@ -44,8 +51,7 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 func (s Server) CabinetGet(ctx *gin.Context, cabinetId UUID) {
 	tx := middleware.Tx(ctx)
 
-	c := &model.Cabinet{}
-	err := model.FakeCabinet(c)
+	c, err := db.MakeAndInsertFakeCabinet(tx)
 	if err != nil {
 		ctx.AbortWithError(500, err)
 		return
@@ -53,17 +59,18 @@ func (s Server) CabinetGet(ctx *gin.Context, cabinetId UUID) {
 
 	log.Info().Any("cabinet", c).Msg("Made fake cabinet")
 
-	r := tx.Create(c)
-	if r.Error != nil {
-		ctx.AbortWithError(500, r.Error)
-		return
-	}
+	stmt := table.Cabinets.
+		SELECT(
+			table.Cabinets.UUID.AS("CabinetDetail.Id"),
+			table.Cabinets.Name.AS("CabinetDetail.Name"),
+		).
+		WHERE(table.Cabinets.ID.EQ(pg.Int(c.ID)))
 
-	log.Info().Any("cabinet", c).Msg("Inserted cabinet")
-	resp := CabinetDetail{
-		Id:      &c.UUID,
-		Drawers: &[]DrawerDetail{},
-		Name:    &c.Name,
+	resp := CabinetDetail{}
+	if err := stmt.QueryContext(ctx, tx, &resp); err != nil {
+		log.Error().Err(err).Msg("Failed to query cabinet")
+		ctx.AbortWithStatus(500)
+		return
 	}
 
 	ctx.JSON(http.StatusOK, resp)

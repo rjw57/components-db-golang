@@ -22,7 +22,7 @@ import (
 // CabinetDetail defines model for CabinetDetail.
 type CabinetDetail struct {
 	Drawers *[]DrawerDetail     `json:"drawers,omitempty"`
-	Id      *openapi_types.UUID `gorm:"column:uuid" json:"id,omitempty"`
+	Id      *openapi_types.UUID `json:"id,omitempty"`
 	Name    *string             `json:"name,omitempty"`
 }
 
@@ -34,7 +34,7 @@ type CabinetList struct {
 
 // CabinetSummary defines model for CabinetSummary.
 type CabinetSummary struct {
-	Id   *openapi_types.UUID `gorm:"column:uuid" json:"id,omitempty"`
+	Id   *openapi_types.UUID `json:"id,omitempty"`
 	Name *string             `json:"name,omitempty"`
 }
 
@@ -43,7 +43,7 @@ type DrawerDetail = DrawerSummary
 
 // DrawerSummary defines model for DrawerSummary.
 type DrawerSummary struct {
-	Id    *openapi_types.UUID `gorm:"column:uuid" json:"id,omitempty"`
+	Id    *openapi_types.UUID `json:"id,omitempty"`
 	Label *string             `json:"label,omitempty"`
 }
 
@@ -190,20 +190,20 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8RWTW/jNhD9K8R0j3asbBZFq1sRowsDW7RAkFPgArQ0krkQSe1wuOvU0H8vSFHyh+yu",
-	"e2hzSfgxfPNm5s1Yeyisbq1Bww7yPbhii1rG5aPcKIO8RJaqCQeyaX6vIH/ZwzvCCnL4YXF4vEgvF+nZ",
-	"k9da0it0sz20ZFskVhhxS5LfkOJSMeq4+CfAZbRPNLoZ8GuLkIMkkq/QHQ7s5jMWDN16cjIbYvmkHAd3",
-	"p4RGFjfRmcR3RmgGBnf86MlZ+h7W8/NqeSmEkfDgZcq5DH8rS1oy5OC9KmGEcUzK1DCD3dzKVs0LW2KN",
-	"Zo47JjlnWUeI2pKGHArbeG3yiBCoGKkxXJ9iXSR5UpmbBdK/GvO3vgr8BsE3coPNjdE/IX1FemLJ3h09",
-	"ORjE6l4gquXuE5qat5A//DgDrczxtpXMSAZy+PMlm/8s59V6/1M3H9cfbljfv+/eTTLShSiUqWwkq7gJ",
-	"d49jfcRSstxIhzCDr0hO2cAhu7u/y0IwtkUjWwU5PNxldw8QiW5j4IuiF2ufWIwdVqIrSLXco4S+E4OV",
-	"+KZ4K1pZKyPjfQSnuF6VgVMyjN0a/JDUyHFkvJwj930mvMNSVJYGWCwFoWutceggRA05fPFIrzAIHIq+",
-	"Q2dp5N3aqucEfpM7pb0WxusNkrCViFNEsBWE7Mlccd8orfjEe4mV9A1Dfp9lUSQBd9gpk3ZjVZVhrJGg",
-	"Cx10CDbfw/ssC/8KaxhNrIZs20YVMcOLzy7w3t8Y9vHgjAI6jf7JFwU6V/lGjDUMavmQ3U9V8Gyk560l",
-	"9ReWvdHD1OhXSxtVlmhi07lhBJxKKGg7NvILpCNYB/NRiYt9Wq3K7qoqPyKLlCQXCieFU6ZucHBzTZgf",
-	"8buyXC0DYMKZaiG0zpESB6oQCvnFK8ISciaP/1Kc/4MQhp/ht5RCrFtKrTTlWMOrqnDjjE46OC1rP8L7",
-	"qv5n+Tv5tbiUvngvlBNblA1v06dNiidFsO6ODiejcJivW9uUytQifWhFJR4+8s5lB9OZtrz0UDS2iIM1",
-	"jG9ljnsxAfb+LuA9XvI+nF2w/+WPlUgRj/Zp3627vwMAAP//yIKdPLMKAAA=",
+	"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",
+	"//9c/qGsTQoAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -1,16 +1,18 @@
 package api
 
 import (
+	pg "github.com/go-jet/jet/v2/postgres"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+
+	"github.com/rjw57/components-db-golang/backend/db/schema/components/public/table"
 )
 
-// StartingAtUUID returns a Gorm scope function which queries for instances of a model whose numeric
-// id is greater than or equal to the model with the matching UUID. If there is no matching UUID, no
-// results are returned.
-func StartingAtUUID(uuid uuid.UUID) func(*gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		subquery := db.Session(&gorm.Session{}).Select("id").Where("uuid = ?", uuid).Limit(1)
-		return db.Where("id >= (?)", subquery).Order("id ASC")
-	}
+func StartingAtUUID(s pg.SelectStatement, t pg.ReadableTable, idCol pg.ColumnInteger, uuidCol pg.ColumnString, uuid uuid.UUID) pg.SelectStatement {
+	sq := pg.SELECT(idCol).FROM(t).WHERE(uuidCol.EQ(pg.UUID(uuid))).LIMIT(1)
+	return s.WHERE(idCol.GT_EQ(pg.IntExp(sq))).ORDER_BY(idCol.ASC())
+}
+
+func CabinetsStartingAtUUID(s pg.SelectStatement, uuid uuid.UUID) pg.SelectStatement {
+	t := table.Cabinets
+	return StartingAtUUID(s, t, t.ID, t.UUID, uuid)
 }

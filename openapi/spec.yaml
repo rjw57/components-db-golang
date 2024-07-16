@@ -95,8 +95,6 @@ components:
         id:
           type: string
           format: uuid
-          x-oapi-codegen-extra-tags:
-            gorm: column:uuid
         name:
           type: string
     ServerStatus:
@@ -126,8 +124,6 @@ components:
         id:
           type: string
           format: uuid
-          x-oapi-codegen-extra-tags:
-            gorm: column:uuid
         label:
           type: string
     DrawerDetail:

@@ -59,19 +59,29 @@ services:
       LIQUIBASE_COMMAND_USERNAME: postgres
       LIQUIBASE_COMMAND_PASSWORD: postgres-pass
     volumes:
-      - ./db/:/liquibase/changelog/:ro
+      - ./backend/db/changelog/:/liquibase/changelog/:ro
     depends_on:
       db:
         condition: service_healthy
 
   # Run database migrations
   db-migrate:
+    extends:
+      service: liquibase
     profiles:
       - dev
       - prod
       - tool
+    command: ["update"]
+
+  # Run test database migrations
+  test-db-migrate:
     extends:
       service: liquibase
+    profiles:
+      - test
+    environment:
+      LIQUIBASE_COMMAND_URL: jdbc:postgresql://db/test
     command: ["update"]
 
   # The API backend running with the production container.
@@ -131,7 +141,8 @@ services:
       - tool
     image: golang:1.22
     working_dir: /usr/src/backend
-    command: ["go", "test", "./..."]
+    entrypoint: ["go", "test"]
+    command: ["./..."]
     volumes:
       - ./:/usr/src/:ro
       - golang-cache:/gocache
@@ -141,26 +152,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      db-migrate:
-        condition: service_completed_successfully
-
-  # Generate backeng/model and backend/query packages from database schema.
-  generate-gorm-models:
-    profiles:
-      - tool
-    image: golang:1.22
-    working_dir: /usr/src
-    command: ["go", "run", "github.com/rjw57/components-db-golang/cmd/gendao"]
-    volumes:
-      - ./:/usr/src/
-      - golang-cache:/gocache
-    environment:
-      <<: *go-environment
-      DATABASE_DSN: postgresql://postgres:postgres-pass@db:5432/components?sslmode=disable
-    depends_on:
-      db:
-        condition: service_healthy
-      db-migrate:
+      test-db-migrate:
         condition: service_completed_successfully
 
   generate-jet-schema:
@@ -176,7 +168,7 @@ services:
         "-dsn",
         "postgresql://components-user:components-pass@db:5432/components?sslmode=disable",
         "-destDir",
-        "./backend/schema",
+        "./backend/db/schema",
       ]
     volumes:
       - ./:/usr/src/

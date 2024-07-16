@@ -6,30 +6,32 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/rjw57/components-db-golang/backend/model"
+	"github.com/rjw57/components-db-golang/backend/db"
+	"github.com/rjw57/components-db-golang/backend/db/schema/components/public/model"
+	"github.com/rjw57/components-db-golang/backend/db/schema/components/public/table"
 )
 
-type QueriesSuite struct{ ModelSuite }
+type QueriesSuite struct{ db.ModelSuite }
 
 func TestQueriesSuite(t *testing.T) {
 	suite.Run(t, &QueriesSuite{})
 }
 
 func (s *QueriesSuite) TestStartingAtUUID() {
-	cs, err := model.MakeAndInsertFakeCabinets(s.DB, 100)
+	cs, err := db.MakeAndInsertFakeCabinets(s.Tx, 100)
 	s.Require().NoError(err, "Error creating fake cabinets")
 
 	testStartingAtIdx := func(idx int) {
 		var found_cs []model.Cabinet
 		starting_c := cs[idx]
-		s.Require().NoError(
-			s.DB.Scopes(StartingAtUUID(starting_c.UUID)).Find(&found_cs).Error,
-			"Error fetching cabinets",
+		stmt := CabinetsStartingAtUUID(
+			table.Cabinets.SELECT(table.Cabinets.AllColumns),
+			starting_c.UUID,
 		)
-
+		s.Require().NoError(stmt.Query(s.Tx, &found_cs), "Error fetching cabinets")
 		s.EqualValues(len(cs)-idx, len(found_cs), "Incorrect number of results")
 		for _, c := range found_cs {
-			s.LessOrEqual(starting_c.ID, c.ID, "Cabinet should not have been selected")
+			s.GreaterOrEqual(c.ID, starting_c.ID, "Cabinet should not have been selected")
 		}
 	}
 
@@ -40,8 +42,11 @@ func (s *QueriesSuite) TestStartingAtUUID() {
 		var found_cs []model.Cabinet
 		uuid, err := uuid.NewRandom()
 		s.Require().NoError(err, "Failed to create UUID")
-		err = s.DB.Scopes(StartingAtUUID(uuid)).Find(&found_cs).Error
-		s.Require().NoError(err, "Error fetching cabinets")
+		stmt := CabinetsStartingAtUUID(
+			table.Cabinets.SELECT(table.Cabinets.AllColumns),
+			uuid,
+		)
+		s.Require().NoError(stmt.Query(s.Tx, &found_cs), "Error fetching cabinets")
 		s.EqualValues(0, len(found_cs), "Incorrect number of results")
 	})
 }

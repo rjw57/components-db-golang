@@ -2,13 +2,13 @@
 package main
 
 import (
+	"database/sql"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	oapivalidate "github.com/oapi-codegen/gin-middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 
 	"github.com/rjw57/components-db-golang/backend/api"
 	"github.com/rjw57/components-db-golang/backend/middleware"
@@ -35,7 +35,7 @@ func main() {
 }
 
 // NewGinEngine constructs a new gin.Engine instance with our desired middleware added.
-func NewGinEngine(db *gorm.DB) *gin.Engine {
+func NewGinEngine(db *sql.DB) *gin.Engine {
 	r := gin.New()
 
 	r.Use(gin.Recovery())

@@ -29,15 +29,13 @@ func main() {
 	fmt.Printf("Examining schema: %v\n", *schema)
 	fmt.Printf("Writing to: %v\n", *destDir)
 
-	var fakeSkipFields = []string{"id", "created_at", "updated_at"}
 	var skipTables = []string{"databasechangelog", "databasechangeloglock"}
+	var tableModelTypeNames = map[string]string{
+		"cabinets": "Cabinet",
+	}
 
 	shouldSkipTable := func(table metadata.Table) bool {
 		return stringSliceContains(skipTables, strings.ToLower(table.Name))
-	}
-
-	shouldFakeSkipField := func(columnMetaData metadata.Column) bool {
-		return stringSliceContains(fakeSkipFields, strings.ToLower(columnMetaData.Name))
 	}
 
 	err := postgres.GenerateDSN(*dsn, *schema, *destDir,
@@ -47,17 +45,15 @@ func main() {
 					UseModel(template.DefaultModel().
 						UseTable(func(table metadata.Table) template.TableModel {
 							if shouldSkipTable(table) {
-								fmt.Printf("Skipping table: %v\n", table.Name)
+								fmt.Printf("Table %s: skipping\n", table.Name)
 								return template.TableModel{Skip: true}
 							}
-							return template.DefaultTableModel(table).
-								UseField(func(columnMetaData metadata.Column) template.TableModelField {
-									defaultTableModelField := template.DefaultTableModelField(columnMetaData)
-									if shouldFakeSkipField(columnMetaData) {
-										defaultTableModelField = defaultTableModelField.UseTags(`fake:"skip"`)
-									}
-									return defaultTableModelField
-								})
+							tableModel := template.DefaultTableModel(table)
+							if typeName, ok := tableModelTypeNames[table.Name]; ok {
+								fmt.Printf("Table %s: using model type name %s\n", table.Name, typeName)
+								tableModel = tableModel.UseTypeName(typeName)
+							}
+							return tableModel
 						}),
 					).
 					UseSQLBuilder(template.DefaultSQLBuilder().
@@ -66,7 +62,12 @@ func main() {
 								fmt.Printf("Skipping table: %v\n", table.Name)
 								return template.TableSQLBuilder{Skip: true}
 							}
-							return template.DefaultTableSQLBuilder(table)
+							tableSQLBuilder := template.DefaultTableSQLBuilder(table)
+							if typeName, ok := tableModelTypeNames[table.Name]; ok {
+								fmt.Printf("Table %s: using default alias %s\n", table.Name, typeName)
+								tableSQLBuilder = tableSQLBuilder.UseDefaultAlias(typeName)
+							}
+							return tableSQLBuilder
 						}),
 					)
 			}),
