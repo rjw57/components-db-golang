@@ -2,15 +2,18 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-jet/jet/v2/postgres"
 	oapivalidate "github.com/oapi-codegen/gin-middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/rjw57/components-db-golang/backend/api"
+	"github.com/rjw57/components-db-golang/backend/db/schema/components/public/table"
 	"github.com/rjw57/components-db-golang/backend/middleware"
 )
 
@@ -18,6 +21,7 @@ func main() {
 	// If we're not in release mode, enable the log pretty-printer.
 	if gin.Mode() != gin.ReleaseMode {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		postgres.SetQueryLogger(queryLogger)
 	}
 
 	// Create a database session.
@@ -29,6 +33,9 @@ func main() {
 	// Create a gin Engine and register API routes with it.
 	r := NewGinEngine(db)
 	api.RegisterHandlers(r, api.NewServer())
+
+	// Configure the schema name for the database.
+	table.UseSchema("public")
 
 	// Serve HTTP until the world ends.
 	log.Fatal().Err(NewHttpServer(r).ListenAndServe())
@@ -49,4 +56,15 @@ func NewGinEngine(db *sql.DB) *gin.Engine {
 	r.Use(oapivalidate.OapiRequestValidator(swagger))
 
 	return r
+}
+
+func queryLogger(ctx context.Context, queryInfo postgres.QueryInfo) {
+	sql, args := queryInfo.Statement.Sql()
+	log.Info().
+		Str("sql", sql).
+		Any("args", args).
+		Int64("rows_processed", queryInfo.RowsProcessed).
+		Any("duration_ns", queryInfo.Duration).
+		Str("duration", queryInfo.Duration.String()).
+		Msg("Executed SQL query")
 }

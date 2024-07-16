@@ -26,7 +26,8 @@ func (s Server) CabinetsList(ctx *gin.Context, params CabinetsListParams) {
 			table.Cabinets.UUID.AS("CabinetSummary.Id"),
 			table.Cabinets.Name.AS("CabinetSummary.Name"),
 		).
-		LIMIT(int64(pageSize + 1))
+		LIMIT(int64(pageSize + 1)).
+		ORDER_BY(table.Cabinets.ID)
 
 	if params.Cursor != nil {
 		stmt = CabinetsStartingAtUUID(stmt, *params.Cursor)
