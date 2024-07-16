@@ -1,9 +1,0 @@
-version: "0.1"
-database:
-  dsn: postgresql://postgres:postgres-pass@db:5432/backend?sslmode=disable
-  db: postgres
-  outPath: backend/query
-  withUnitTest: false
-  fieldNullable: true
-  fieldWithIndexTag: true
-  fieldWithTypeTag: true
