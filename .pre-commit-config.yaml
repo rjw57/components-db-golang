@@ -26,24 +26,24 @@ repos:
       - id: go-generate
         name: go generate
         language: system
-        files: "^(openapi/|db/|cmd/genmodels/)"
+        files: "^(openapi/|db/|backend/cmd/genmodels/)"
         entry: go generate ./backend/...
         pass_filenames: false
       - id: go-fmt
         name: go fmt
         files: "\\.go$"
         language: system
-        entry: sh -c '(cd backend && go fmt ./...) && (cd cmd && go fmt ./...)'
+        entry: sh -c 'cd backend && go fmt ./...'
         pass_filenames: false
       - id: go-vet
         name: go vet
         files: "\\.go$"
         language: system
-        entry: go vet ./backend/... ./cmd/...
+        entry: go vet ./backend/...
         pass_filenames: false
       - id: go-mod-tidy
         name: go mod tidy
         files: "\\.go$"
         language: system
-        entry: sh -c '(cd backend && go mod tidy) && (cd cmd && go mod tidy)'
+        entry: sh -c 'cd backend && go mod tidy'
         pass_filenames: false

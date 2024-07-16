@@ -164,7 +164,7 @@ services:
       [
         "go",
         "run",
-        "github.com/rjw57/components-db-golang/cmd/genmodels",
+        "github.com/rjw57/components-db-golang/backend/cmd/genmodels",
         "-dsn",
         "postgresql://components-user:components-pass@db:5432/components?sslmode=disable",
         "-destDir",
