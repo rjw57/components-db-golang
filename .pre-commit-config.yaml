@@ -26,7 +26,7 @@ repos:
       - id: go-generate
         name: go generate
         language: system
-        files: "^(openapi/|db|/cmd/gendao/)"
+        files: "^(openapi/|db/|cmd/genmodels/)"
         entry: go generate ./backend/...
         pass_filenames: false
       - id: go-fmt

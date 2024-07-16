@@ -16,6 +16,6 @@ type Cabinets struct {
 	ID        int64 `sql:"primary_key" fake:"skip"`
 	UUID      uuid.UUID
 	Name      string
-	CreatedAt time.Time  `fake:"skip"`
-	UpdatedAt *time.Time `fake:"skip"`
+	CreatedAt time.Time `fake:"skip"`
+	UpdatedAt time.Time `fake:"skip"`
 }

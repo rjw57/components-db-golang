@@ -48,14 +48,18 @@ services:
       db:
         condition: service_healthy
 
-  # Run the atlas migration tool
-  atlas:
+  # Run the liquibase migration tool
+  liquibase:
     profiles:
       - tool
-    image: arigaio/atlas:0.25.0
-    working_dir: /workspace/db
+    image: liquibase/liquibase:4.28
+    environment:
+      LIQUIBASE_COMMAND_URL: jdbc:postgresql://db/components
+      LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog/changelog.sql
+      LIQUIBASE_COMMAND_USERNAME: postgres
+      LIQUIBASE_COMMAND_PASSWORD: postgres-pass
     volumes:
-      - ./:/workspace/:ro
+      - ./db/:/liquibase/changelog/:ro
     depends_on:
       db:
         condition: service_healthy
@@ -67,8 +71,8 @@ services:
       - prod
       - tool
     extends:
-      service: atlas
-    command: ["schema", "apply", "--env", "local", "--auto-approve"]
+      service: liquibase
+    command: ["update"]
 
   # The API backend running with the production container.
   backend-prod:
